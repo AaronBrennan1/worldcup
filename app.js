@@ -313,8 +313,8 @@ function players(){
 
     <div class="card panel scatter-card-v2">
       <div class="scatter-axes">
-        <span>Vertical Axis (Y) <select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k背=== "xg90" || k === "xg90"?" selected":""}>${l}</option>`).join("")}</select></span>
-        <span>Horizontal Axis (X) <select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k背=== "sh90" || k === "sh90"?" selected":""}>${l}</option>`).join("")}</select></span>
+        <span>Vertical Axis (Y) <select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k=== "xg90" || k === "xg90"?" selected":""}>${l}</option>`).join("")}</select></span>
+        <span>Horizontal Axis (X) <select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k=== "sh90" || k === "sh90"?" selected":""}>${l}</option>`).join("")}</select></span>
       </div>
       <div id="scatter" class="scatter-wrap-v2"></div>
       <div class="scatter-foot"><span id="scount" class="muted"></span><span id="selinfo" class="selinfo"></span></div>
