@@ -268,11 +268,7 @@ table.dt .name{cursor:pointer}
 .prow .nm{font-weight:700;font-size:13.5px;flex:1;display:flex;align-items:center;gap:7px}
 .prow .pwr{font-family:"Spline Sans Mono";font-size:10px;color:var(--mut);background:var(--ink3);
   padding:1px 6px;border-radius:5px}
-.prow .ord{display:flex;flex-direction:column;gap:2px}
-.prow .ob{background:var(--ink3);border:1px solid var(--line);color:var(--txt);border-radius:5px;
-  width:24px;height:17px;line-height:1;font-size:9px;cursor:pointer;padding:0}
-.prow .ob:hover:not(:disabled){background:var(--lime);color:var(--ink);border-color:var(--lime)}
-.prow .ob:disabled{opacity:.25;cursor:default}
+
 .prow.adv-win{background:rgba(57,224,127,.08)} .prow.adv-win .ppos{color:var(--conf-CAF)}
 .prow.adv-run{background:rgba(51,224,255,.06)} .prow.adv-run .ppos{color:var(--cyan)}
 .prow.adv-third .ppos{color:var(--gold)}
@@ -312,4 +308,105 @@ table.dt .name{cursor:pointer}
 @media(max-width:560px){
   .prow .ppos{width:20px;overflow:hidden;text-indent:-999px}
   .prow .ppos::after{content:attr(data-n)}
+}
+
+
+/* ---- Drag and Drop Visuals ---- */
+.prow[draggable="true"] {
+  cursor: grab;
+  user-select: none;
+  transition: background-color 0.2s, transform 0.15s;
+}
+.prow[draggable="true"]:active {
+  cursor: grabbing;
+}
+.prow.dragging {
+  opacity: 0.4;
+  background: var(--ink3);
+  border: 2px dashed var(--lime);
+  transform: scale(0.98);
+}
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mut2);
+  padding: 0 4px;
+  font-size: 14px;
+  cursor: grab;
+}
+.prow:hover .drag-handle {
+  color: var(--lime);
+}
+
+/* ---- Responsive Bracket Tabs for Mobile ---- */
+.bracket-tabs {
+  display: none;
+  gap: 6px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+@media (max-width: 960px) {
+  .bracket-tabs {
+    display: flex;
+  }
+  .bracket {
+    min-width: 100% !important;
+    gap: 0;
+  }
+  .bcol {
+    display: none;
+    width: 100%;
+    animation: fade 0.3s ease;
+  }
+  .bcol.active-round {
+    display: flex;
+  }
+}
+
+/* ---- Grand Final & 3rd Place Showdown Display ---- */
+.finals-showdown {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 420px;
+  margin: 30px auto 0;
+}
+.finals-card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.finals-card.gold {
+  background: linear-gradient(135deg, rgba(255,194,75,0.12), rgba(10,11,13,1));
+  border-color: var(--gold);
+}
+.finals-card.bronze {
+  background: linear-gradient(135deg, rgba(179,136,255,0.1), rgba(10,11,13,1));
+  border-color: var(--conf-OFC);
+}
+.finals-title {
+  font-family: "Anton", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  padding: 8px 16px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.finals-card.gold .finals-title { background: rgba(255,194,75,0.2); color: var(--gold); }
+.finals-card.bronze .finals-title { background: rgba(179,136,255,0.15); color: var(--conf-OFC); }
+
+/* ---- Premium Mobile Ergonomics ---- */
+@media (max-width: 560px) {
+  body { font-size: 15px; }
+  .wrap { padding: 0 16px; }
+  header.top { background: rgba(10,11,13,0.95); }
+  .hero { padding: 32px 20px; }
+  .bteam { padding: 12px 14px; font-size: 14px; } /* Larger touch targets */
+  .prow { padding: 12px 8px; }
 }

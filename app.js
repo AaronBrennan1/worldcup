@@ -532,6 +532,7 @@ function activeScen(){
   if(PRED.third.size!==8) return null;
   return SCENMAP[[...PRED.third].sort().join("")]||null;
 }
+
 function r32map(){
   const b=D.bracket, fixed=b.round_of_32.fixed_matches, tp=b.round_of_32.third_place_matches;
   const tok=t=>{const m=/^([12])([A-L])$/.exec(t); if(!m)return null; return m[1]==="1"?winnerG(m[2]):runnerG(m[2]);};
@@ -545,10 +546,13 @@ function r32map(){
   });
   return map;
 }
+
 let _R32=null;
 const matchDef=id=>{const b=D.bracket;
   return (b.round_of_16.matches[id]||b.quarter_finals.matches[id]||b.semi_finals.matches[id]||
           b.final.matches[id]||b.third_place_playoff.matches[id]);};
+
+
 function participants(id){
   if(_R32[id]) return _R32[id];
   const m=matchDef(id); if(!m) return {home:null,away:null};
@@ -595,25 +599,73 @@ function renderPredictor(){
 function stepGroups(){
   const posLbl=["1 · Winner","2 · Runner-up","3 · Third place","4 · Eliminated"];
   const posCls=["adv-win","adv-run","adv-third","adv-out"];
-  $("#pbody").innerHTML=`<p class="muted substep">Use the arrows to reorder each group. Top two always advance; third place may advance in the next step.</p>
+  
+  // Update instructions for Drag & Drop UI
+  $("#pbody").innerHTML=`<p class="muted substep">Drag and drop teams to reorder each group. Top two always advance; third place may advance in the next step.</p>
   <div class="grid-groups">
     ${Object.keys(D.groups).map(g=>`
-      <div class="card gcard pgcard"><div class="gh"><span class="gl">Group <b>${g}</b></span></div>
+      <div class="card gcard pgcard" data-g="${g}">
+        <div class="gh"><span class="gl">Group <b>${g}</b></span></div>
         ${PRED.order[g].map((code,i)=>{const t=byCode(code);
-          return `<div class="prow ${posCls[i]}">
+          return `<div class="prow ${posCls[i]}" draggable="true" data-g="${g}" data-code="${code}">
+            <span class="drag-handle">⋮⋮</span>
             <span class="ppos">${posLbl[i]}</span>
             <span class="fl">${t.flag}</span>
             <span class="nm">${esc(t.name)} <span class="pwr">${t.power}</span></span>
-            <span class="ord">
-              <button class="ob" data-g="${g}" data-i="${i}" data-d="-1" ${i===0?"disabled":""}>▲</button>
-              <button class="ob" data-g="${g}" data-i="${i}" data-d="1" ${i===3?"disabled":""}>▼</button>
-            </span></div>`;}).join("")}
+          </div>`;}).join("")}
       </div>`).join("")}
   </div>`;
-  $("#pbody").querySelectorAll(".ob").forEach(b=>b.addEventListener("click",()=>{
-    const g=b.dataset.g,i=+b.dataset.i,d=+b.dataset.d,arr=PRED.order[g];
-    const j=i+d; if(j<0||j>3)return; [arr[i],arr[j]]=[arr[j],arr[i]]; stepGroups();
-  }));
+
+  // Bind Native Drag & Drop Lifecycle Events
+  const containers = $("#pbody").querySelectorAll(".pgcard");
+  containers.forEach(container => {
+    const g = container.dataset.g;
+    const rows = container.querySelectorAll(".prow");
+
+    rows.forEach(row => {
+      row.addEventListener("dragstart", (e) => {
+        row.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", row.dataset.code);
+      });
+
+      row.addEventListener("dragend", () => {
+        row.classList.remove("dragging");
+      });
+    });
+
+    container.addEventListener("dragover", (e) => {
+      e.preventDefault(); // Required to allow a drop action
+      const draggingRow = $("#pbody").querySelector(".prow.dragging");
+      if (!draggingRow || draggingRow.dataset.g !== g) return; // Restrict scope within same group
+
+      const currentTarget = e.target.closest(".prow");
+      if (!currentTarget || currentTarget === draggingRow) return;
+
+      const bounding = currentTarget.getBoundingClientRect();
+      const offset = e.clientY - bounding.top;
+      
+      // Determine dropping insertion sequence dynamically 
+      if (offset > bounding.height / 2) {
+        currentTarget.after(draggingRow);
+      } else {
+        currentTarget.before(draggingRow);
+      }
+    });
+
+    container.addEventListener("drop", (e) => {
+      e.preventDefault();
+      
+      // Read final sequential order directly out of updated DOM layout structure
+      const rowElements = Array.from(container.querySelectorAll(".prow"));
+      const updatedCodes = rowElements.map(el => el.dataset.code);
+      
+      // Mutate local state configuration array
+      PRED.order[g] = updatedCodes;
+      
+      // Re-trigger visual render to automatically update labels, classifications, and colors
+      stepGroups();
+    });
+  });
 }
 
 /* ---- Step 2: pick 8 third-placed teams ---- */
@@ -648,10 +700,19 @@ function teamPill(id,code,isWin){
   return `<button class="bteam ${isWin?"win":""}" data-m="${id}" data-c="${code}">
     <span class="fl">${t.flag}</span><span class="bn">${esc(t.name)}</span></button>`;
 }
+
+
+// Tracks the active mobile view column tab state cleanly across re-renders
+window.currentMobileRound = window.currentMobileRound ?? 0;
+
 function stepKnockout(){
   const scen=activeScen();
-  if(!scen){ $("#pbody").innerHTML=`<div class="empty">Pick exactly eight third-placed teams in step 2 to build the Round of 32. <button class="btn sm" id="toStep2">Go to step 2 →</button></div>`;
-    $("#toStep2").addEventListener("click",()=>{PSTEP=2;renderPredictor();}); return; }
+  if(!scen){ 
+    $("#pbody").innerHTML=`<div class="empty">Pick exactly eight third-placed teams in step 2 to build the Round of 32. <button class="btn sm" id="toStep2">Go to step 2 →</button></div>`;
+    $("#toStep2").addEventListener("click",()=>{PSTEP=2;renderPredictor();}); 
+    return; 
+  }
+
   const matchBox=(id,label)=>{
     const {home,away,thirdPending}=participants(id);
     const w=winnerCode(id);
@@ -660,6 +721,94 @@ function stepKnockout(){
       ${teamPill(id,home,w&&w===home)}
       ${teamPill(id,away,w&&w===away)}</div>`;
   };
+
+  const col=(title,ids,colIdx,labels)=>{
+    const isActive = window.currentMobileRound === colIdx ? 'active-round' : '';
+    return `<div class="bcol ${isActive}" data-idx="${colIdx}"><h4>${title}</h4>${ids.map((id,i)=>matchBox(id,labels&&labels[i])).join("")}</div>`;
+  };
+
+  const r32ids=["M74","M77","M73","M75","M76","M78","M79","M80","M81","M82","M85","M87","M83","M84","M86","M88"];
+  const r16ids=["M89","M90","M91","M92","M95","M96","M93","M94"];
+  const qfids=["M97","M98","M99","M100"], sfids=["M101","M102"];
+  const champ=winnerCode("M104");
+
+  // Mobile layout navigation tags
+  const tabsMeta = [
+    { name: "R32", label: "Round of 32" },
+    { name: "R16", label: "Round of 16" },
+    { name: "QF", label: "Quarters" },
+    { name: "SF", label: "Semis" },
+    { name: "Finals", label: "Finals" }
+  ];
+
+  const tabsHtml = `
+    <div class="bracket-tabs">
+      ${tabsMeta.map((tab, idx) => `
+        <button class="chip ${window.currentMobileRound === idx ? 'on' : ''}" onclick="window.switchMobileRound(${idx})">
+          ${tab.name}
+        </button>
+      `).join("")}
+    </div>
+  `;
+
+  const finalsColActive = window.currentMobileRound === 4 ? 'active-round' : '';
+
+  $("#pbody").innerHTML=`
+    <p class="muted substep">Click a team to send them through. Later rounds default to the favourite until you change them.</p>
+    
+    ${tabsHtml}
+    
+    <div class="bracket-scroll">
+      <div class="bracket pred-bracket">
+        ${col("Round of 32", r32ids, 0)}
+        ${col("Round of 16", r16ids, 1)}
+        ${col("Quarter-finals", qfids, 2)}
+        ${col("Semi-finals", sfids, 3)}
+        
+        <div class="bcol ${finalsColActive}" data-idx="4" data-round="finals">
+          <h4>Showdown</h4>
+          <div class="finals-showdown">
+            
+            <div class="finals-card gold">
+              <div class="finals-title">🏆 Grand Final<span>Gold & Silver</span></div>
+              <div class="pred-bracket">
+                ${matchBox("M104", "MATCH 104 · METLIFE STADIUM")}
+              </div>
+            </div>
+
+            <div class="finals-card bronze">
+              <div class="finals-title">🥉 3rd Place Match<span>Bronze Medal</span></div>
+              <div class="pred-bracket">
+                ${matchBox("M103", "MATCH 103 · HARD ROCK STADIUM")}
+              </div>
+            </div>
+
+          </div>
+          
+          ${champ ? `
+            <div class="champ-box animated-glowing">
+              <span>World Cup 2026 Champion</span>
+              <b>🎉 ${esc(byCode(champ).name)} 🎉</b>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    </div>`;
+
+  // Bind interactions directly to state modification loop mechanics
+  $("#pbody").querySelectorAll(".bteam[data-c]").forEach(b=>b.addEventListener("click",()=>{
+    PRED.picks[b.dataset.m]=b.dataset.c; 
+    renderPredictor();
+  }));
+}
+
+// Global UI switcher utility handling active class overrides safely on mobile viewports
+window.switchMobileRound = function(idx) {
+  window.currentMobileRound = idx;
+  document.querySelectorAll(".bracket-tabs .chip").forEach((btn, i) => btn.classList.toggle("on", i === idx));
+  document.querySelectorAll(".bracket .bcol").forEach((col, i) => col.classList.toggle("active-round", i === idx));
+};
+
   const col=(title,ids,labels)=>`<div class="bcol"><h4>${title}</h4>${ids.map((id,i)=>matchBox(id,labels&&labels[i])).join("")}</div>`;
   const r32ids=["M74","M77","M73","M75","M76","M78","M79","M80","M81","M82","M85","M87","M83","M84","M86","M88"];
   const r16ids=["M89","M90","M91","M92","M95","M96","M93","M94"];
@@ -682,7 +831,7 @@ function stepKnockout(){
   $("#pbody").querySelectorAll(".bteam[data-c]").forEach(b=>b.addEventListener("click",()=>{
     PRED.picks[b.dataset.m]=b.dataset.c; renderPredictor();
   }));
-}
+
 
 /* ---------- ODDS / FANTASY (coming soon) ---------- */
 function odds(){
@@ -719,6 +868,72 @@ function makeSortable(table, rows, renderFn){
     rows.sort((a,b)=>cmp(a[k],b[k])*dir); draw();
   }));
   draw();
+}
+
+
+function initGroupDragAndDrop() {
+  const containers = document.querySelectorAll('.pgcard');
+  
+  containers.forEach(container => {
+    container.addEventListener('dragstart', e => {
+      const row = e.target.closest('.prow');
+      if (!row) return;
+      row.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', JSON.stringify({
+        groupId: row.dataset.group,
+        teamId: row.dataset.teamId
+      }));
+    });
+
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+      const draggingRow = document.querySelector('.prow.dragging');
+      const currentTarget = e.target.closest('.prow');
+      if (!draggingRow || !currentTarget || draggingRow === currentTarget) return;
+      
+      // Ensure dragging stays constrained inside the exact same group card container
+      if (draggingRow.dataset.group !== currentTarget.dataset.group) return;
+
+      const bounding = currentTarget.getBoundingClientRect();
+      const offset = e.clientY - bounding.top;
+      if (offset > bounding.height / 2) {
+        currentTarget.after(draggingRow);
+      } else {
+        currentTarget.before(draggingRow);
+      }
+    });
+
+    container.addEventListener('drop', e => {
+      e.preventDefault();
+      const draggingRow = document.querySelector('.prow.dragging');
+      if (!draggingRow) return;
+      
+      const groupId = draggingRow.dataset.group;
+      // Extract rows in new state array layout order
+      const rowElements = Array.from(container.querySelectorAll('.prow'));
+      const updatedTeamIds = rowElements.map(el => el.dataset.teamId);
+
+      // --- CRITICAL STATE MUTATION CALL ---
+      // Pass updatedTeamIds array sequence to your existing state manager to trigger updates:
+      updateGroupOrderState(groupId, updatedTeamIds);
+    });
+
+    container.addEventListener('dragend', e => {
+      const row = e.target.closest('.prow');
+      if (row) row.classList.remove('dragging');
+    });
+    
+    // Smooth Native Touch Event Support Layer for High-End Mobile feel
+    container.addEventListener('touchstart', e => {
+      if(e.target.classList.contains('drag-handle')) {
+        document.body.style.overflow = 'hidden'; // Lock scrolling during drag action
+      }
+    }, {passive: false});
+    
+    container.addEventListener('touchend', e => {
+      document.body.style.overflow = '';
+    });
+  });
 }
 
 render();
