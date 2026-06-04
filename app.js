@@ -11,6 +11,221 @@ const teamsArr = () => Object.values(D.teams);
 const byCode = c => D.teams[c];
 const groupOf = code => byCode(code)?.group;
 
+/* ---------- Global Premium Styles Injector ---------- */
+const injectGlobalDashboardStyles = () => {
+  if (document.getElementById("wc26-dashboard-styles")) return;
+  const style = document.createElement("style");
+  style.id = "wc26-dashboard-styles";
+  style.innerHTML = `
+    :root {
+      --bg-dark: #0b0f17;
+      --card-bg: #131a26;
+      --card-border: #222d3f;
+      --text-muted: #8a99ad;
+      --lime-glow: rgba(204, 255, 0, 0.15);
+      --mag-glow: rgba(255, 0, 85, 0.15);
+    }
+    
+    /* Dashboard Utility Grid Layouts */
+    .dashboard-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      font-family: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
+      color: #f1f5f9;
+      animation: fadeIn 0.4s ease-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Premium Glassmorphic Controls */
+    .control-deck {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      align-items: end;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .control-group label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .control-deck input, .control-deck select {
+      background: #1c2635;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .control-deck input:focus, .control-deck select:focus {
+      outline: none;
+      border-color: var(--lime, #ccff00);
+      box-shadow: 0 0 0 3px var(--lime-glow);
+    }
+    
+    /* Modern Dynamic HUD Banner */
+    .premium-hud {
+      background: linear-gradient(135deg, #1a2333 0%, #131a26 100%);
+      border-left: 4px solid var(--lime, #ccff00);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .hud-title { font-size: 15px; font-weight: 600; }
+    .hud-highlight { color: var(--lime, #ccff00); font-weight: 800; }
+    
+    /* Scatter Plot Masterpiece Container */
+    .scatter-container-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    .scatter-axis-selectors {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .axis-pill-selector {
+      background: #1c2635;
+      border: 1px solid var(--card-border);
+      border-radius: 30px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .axis-pill-selector select {
+      background: transparent;
+      border: none;
+      color: var(--lime, #ccff00);
+      font-weight: 700;
+      cursor: pointer;
+      outline: none;
+    }
+    .scatter-view-wrapper {
+      background: #0e131f;
+      border-radius: 12px;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #1c2635;
+    }
+    .scatter-svg { width: 100%; height: auto; display: block; }
+    
+    /* High Fidelity Dynamic Tables */
+    .table-container-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    table.dt.adv { width: 100%; border-collapse: collapse; margin: 0; font-size: 14px; }
+    table.dt.adv th {
+      background: #182232;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    table.dt.adv th:hover { background: #202c3f; color: #fff; }
+    table.dt.adv th.active-sort-th { color: var(--lime, #ccff00); background: #1c293a; }
+    table.dt.adv td { padding: 14px 16px; border-bottom: 1px solid #182232; transition: all 0.15s; }
+    table.dt.adv tbody tr:hover td { background: #1b2637; }
+    table.dt.adv tr.selrow td { background: rgba(255, 0, 85, 0.08) !important; border-bottom-color: rgba(255, 0, 85, 0.3); }
+    
+    /* Position Micro Badges */
+    .pos-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .pos-GK { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .pos-DF { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .pos-MF { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+    .pos-FW { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+    /* Team Statistics Podium Upgrades */
+    .championship-podium-deck {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: end;
+      margin: 10px 0;
+    }
+    .podium-showcase-card {
+      background: linear-gradient(180deg, #182232 0%, var(--card-bg) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+    }
+    .podium-showcase-card:hover { transform: translateY(-4px); }
+    .podium-showcase-card.rank-1 { border-top: 4px solid #ffd700; order: 2; padding: 36px 24px; }
+    .podium-showcase-card.rank-2 { border-top: 4px solid #c0c0c0; order: 1; }
+    .podium-showcase-card.rank-3 { border-top: 4px solid #cd7f32; order: 3; }
+    
+    .podium-crown { font-size: 24px; margin-bottom: 8px; block-size: auto; }
+    .podium-nation-title { font-size: 18px; font-weight: 800; margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px;}
+    .podium-metric-display { background: #0e131f; border-radius: 10px; padding: 10px; margin-top: 14px; }
+    .podium-metric-display .big-value { font-size: 28px; font-weight: 900; color: var(--lime, #ccff00); display: block; }
+    .podium-metric-display .sub-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+
+    /* Performance Progress Tracking Micro Elements */
+    .perf-bar-track { background: #1c2635; border-radius: 3px; height: 5px; width: 100%; margin-top: 6px; overflow: hidden; }
+    .perf-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--lime, #ccff00), #a3e635); box-shadow: 0 0 8px var(--lime); }
+    
+    /* Responsive Viewport Optimizations */
+    @media (max-width: 800px) {
+      .championship-podium-deck { grid-template-columns: 1fr; }
+      .podium-showcase-card.rank-1 { order: 1; }
+      .podium-showcase-card.rank-2 { order: 2; }
+      .podium-showcase-card.rank-3 { order: 3; }
+      .control-deck { grid-template-columns: 1fr; }
+    }
+  `;
+  document.head.appendChild(style);
+};
+
 /* ---------- router ---------- */
 const routes = {
   "": home, "groups": groups, "bracket": bracket, "countries": countries,
@@ -292,46 +507,90 @@ const fmtN = (v,d=2)=> v==null?"–":(typeof v==="number"? (Number.isInteger(v)?
 let playerLimit = 25; // Default visible rows for table expansion control
 
 function players(){
+  injectGlobalDashboardStyles();
+  
   app.innerHTML = `
-    <div class="kicker">Tournament Performance Matrix</div>
-    <div class="sec-h"><h1>Player Advanced Analytics</h1><span class="pill">${D.players.length} active metrics profiles</span></div>
-    
-    <div id="active-filter-hud" class="analytics-hud-banner">
-       Visualizing: <span id="hud-y-label" class="hud-highlight">xG / 90</span> <span class="muted">vs</span> <span id="hud-x-label" class="hud-highlight">Shots / 90</span>
-    </div>
-
-    <div class="filters pf">
-      <input id="psearch" placeholder="Search player or nationality…">
-      <select id="ppos"><option value="">All positions</option>
-        <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select>
-      <select id="pteam"><option value="">All teams</option>
-        ${teamsArr().filter(t=>t.squad && t.squad.length).sort((a,b)=>a.name.localeCompare(b.name))
-          .map(t=>`<option value="${t.code}">${esc(t.name)}</option>`).join("")}</select>
-      <span class="minmin"><label>Min minutes <b id="mmval">270</b></label>
-        <input type="range" id="pmin" min="0" max="900" step="90" value="270"></span>
-    </div>
-
-    <div class="card panel scatter-card-v2">
-      <div class="scatter-axes">
-        <span>Vertical Axis (Y) <select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k=== "xg90" || k === "xg90"?" selected":""}>${l}</option>`).join("")}</select></span>
-        <span>Horizontal Axis (X) <select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k=== "sh90" || k === "sh90"?" selected":""}>${l}</option>`).join("")}</select></span>
+    <div class="dashboard-wrapper">
+      <div>
+        <div class="kicker">Tournament Performance Matrix</div>
+        <div class="sec-h"><h1>Player Advanced Analytics</h1><span class="pill">${D.players.length} active metrics profiles</span></div>
       </div>
-      <div id="scatter" class="scatter-wrap-v2"></div>
-      <div class="scatter-foot"><span id="scount" class="muted"></span><span id="selinfo" class="selinfo"></span></div>
-    </div>
+      
+      <div id="active-filter-hud" class="premium-hud">
+         <div class="hud-title">Visualizing Portfolio Coordinate Clusters: <span id="hud-y-label" class="hud-highlight">xG / 90</span> <span class="muted">vs</span> <span id="hud-x-label" class="hud-highlight">Shots / 90</span></div>
+         <div id="selinfo" class="selinfo text-muted"></div>
+      </div>
 
-    <div class="tbl-wrap"><table class="dt adv" id="pt">
-      <thead><tr>
-        <th data-k="name" data-t="s">Player</th><th data-k="team" data-t="s">Team</th>
-        <th data-k="pos" data-t="s">Pos</th><th class="num" data-k="age">Age</th>
-        <th class="num" data-k="min">Min</th><th class="num" data-k="gs">St</th>
-        <th class="num" data-k="g">G</th><th class="num" data-k="a">A</th>
-        <th class="num" data-k="xg">xG</th><th class="num hl" data-k="xg90">xG/90</th>
-        <th class="num" data-k="sh90">Sh/90</th><th class="num" data-k="sot90">SoT/90</th>
-        <th class="num" data-k="kp90">KP/90</th><th class="num" data-k="tk90">Tk/90</th>
-        <th class="num" data-k="rt">Rating</th></tr></thead>
-      <tbody></tbody></table></div>
-      <div id="table-expansion-control" class="expandable-table-footer"></div>`;
+      <div class="control-deck">
+        <div class="control-group">
+          <label>Search Directory</label>
+          <input id="psearch" placeholder="Search player or nationality…">
+        </div>
+        <div class="control-group">
+          <label>Tactical Position</label>
+          <select id="ppos"><option value="">All positions</option>
+            <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select>
+        </div>
+        <div class="control-group">
+          <label>National Representative</label>
+          <select id="pteam"><option value="">All teams</option>
+            ${teamsArr().filter(t=>t.squad && t.squad.length).sort((a,b)=>a.name.localeCompare(b.name))
+              .map(t=>`<option value="${t.code}">${esc(t.name)}</option>`).join("")}</select>
+        </div>
+        <div class="control-group">
+          <label>Min Minutes Logged (<b id="mmval">270</b>m)</label>
+          <input type="range" id="pmin" min="0" max="900" step="90" value="270" style="margin: 12px 0;">
+        </div>
+      </div>
+
+      <div class="scatter-container-card">
+        <div class="scatter-axis-selectors">
+          <div class="axis-pill-selector">
+            <span>Vertical Axis (Y):</span>
+            <select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="xg90"?" selected":""}>${l}</option>`).join("")}</select>
+          </div>
+          <div class="axis-pill-selector">
+            <span>Horizontal Axis (X):</span>
+            <select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="sh90"?" selected":""}>${l}</option>`).join("")}</select>
+          </div>
+        </div>
+        <div class="scatter-view-wrapper">
+          <div id="scatter"></div>
+        </div>
+        <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 12px;" class="text-muted">
+          <span id="scount"></span>
+          <span>💡 Hover points for tactical breakdown card · Click to lock highlight row</span>
+        </div>
+      </div>
+
+      <div class="table-container-card">
+        <div class="tbl-wrap">
+          <table class="dt adv" id="pt">
+            <thead>
+              <tr>
+                <th data-k="name" data-t="s">Player</th>
+                <th data-k="team" data-t="s">Team</th>
+                <th data-k="pos" data-t="s">Pos</th>
+                <th class="num" data-k="age">Age</th>
+                <th class="num" data-k="min">Min</th>
+                <th class="num" data-k="gs">St</th>
+                <th class="num" data-k="g">G</th>
+                <th class="num" data-k="a">A</th>
+                <th class="num" data-k="xg">xG</th>
+                <th class="num hl" data-k="xg90">xG/90</th>
+                <th class="num" data-k="sh90">Sh/90</th>
+                <th class="num" data-k="sot90">SoT/90</th>
+                <th class="num" data-k="kp90">KP/90</th>
+                <th class="num" data-k="tk90">Tk/90</th>
+                <th class="num" data-k="rt">Rating</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="table-expansion-control" style="padding: 16px; background: #111823; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--card-border);"></div>
+      </div>
+    </div>`;
 
   let q="",pos="",team="",minMin=270;
   let ax="sh90", ay="xg90";
@@ -344,17 +603,12 @@ function players(){
       ((p.name||"").toLowerCase().includes(q)||(p.nat||"").toLowerCase().includes(q)));
 
   const drawScatter = (rows)=>{
-    // Clean, high-impact scannable design: Select data points cleanly
     const pts = rows.filter(p=>p[ax]!=null && p[ay]!=null);
-    
-    // Sort to determine outliers / top 35 performers to assign inline label text nodes safely
-    const topPerformers = [...pts].sort((m,n) => ((n[ay] * n[ax]) - (m[ay] * m[ax]))).slice(0, 35);
+    const topPerformers = [...pts].sort((m,n) => ((n[ay] * n[ax]) - (m[ay] * m[ax]))).slice(0, 25);
     const visibleScatterSet = new Set(topPerformers.map(p => p.name));
+    const plottedPts = pts.slice(0, 85);
 
-    // Constrain the scatter plot to maximum top 65 players matching metric density criteria to ensure clean screen layout
-    const plottedPts = pts.slice(0, 65);
-
-    const W=840,H=480,pad={l:70,r:40,t:30,b:60};
+    const W=840,H=440,pad={l:65,r:40,t:30,b:50};
     const xs=plottedPts.map(p=>p[ax]), ys=plottedPts.map(p=>p[ay]);
     const xmax=Math.max(0.0001,...xs), ymax=Math.max(0.0001,...ys);
     const xmin=Math.min(0,...xs), ymin=Math.min(0,...ys);
@@ -363,11 +617,10 @@ function players(){
     
     const med=a=>{if(!a.length)return 0;const s=[...a].sort((m,n)=>m-n);return s[Math.floor(s.length/2)];};
     const mx=med(xs), my=med(ys);
-    const rad=p=>p.name===selCode ? 9 : 5.5;
+    const rad=p=>p.name===selCode ? 9 : 6;
 
     const ticks=(lo,hi,n=5)=>Array.from({length:n+1},(_,i)=>lo+(hi-lo)*i/n);
     
-    // Build dots plus explicit scannable persistent layout text label tags inside data field visual cloud
     let dotsHtml = "";
     let labelsHtml = "";
 
@@ -379,50 +632,47 @@ function players(){
       
       dotsHtml += `<circle class="dot${sel?" sel":""}" data-i="${i}" cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}"
         r="${playerRadius.toFixed(1)}" fill="${sel ? "var(--mag, #ff0055)" : "var(--lime, #ccff00)"}"
-        fill-opacity="${sel?1.0:0.72}" stroke="#11141a" stroke-width="${sel?2.5:1}"/>`;
+        fill-opacity="${sel?1.0:0.65}" stroke="#0b0f17" stroke-width="${sel?2.5:1.2}" style="cursor:pointer; transition: r 0.2s;" />`;
 
-      // If player is a top metric performer or selected explicitly, append standard scannable textual string tag directly next to visual dot node
       if (sel || visibleScatterSet.has(p.name)) {
-        labelsHtml += `<text class="scatter-inline-label" x="${(cxPos + 8).toFixed(1)}" y="${(cyPos + 4).toFixed(1)}" font-size="10" fill="${sel ? "#fff" : "#9aa3b2"}">${esc(shortName(p.name))}</text>`;
+        labelsHtml += `<text class="scatter-inline-label" x="${(cxPos + 9).toFixed(1)}" y="${(cyPos + 3).toFixed(1)}" font-size="10" font-family="sans-serif" font-weight="600" fill="${sel ? "#ff0055" : "#a1b0cb"}">${esc(shortName(p.name))}</text>`;
       }
     });
 
-    const xlabels=ticks(xmin,xmax).map(v=>`<text class="axtt" x="${sx(v)}" y="${H-pad.b+20}" text-anchor="middle">${(+v.toFixed(2))}</text>`).join("");
-    const ylabels=ticks(ymin,ymax).map(v=>`<text class="axtt" x="${pad.l-12}" y="${sy(v)+4}" text-anchor="end">${(+v.toFixed(2))}</text>`).join("");
+    const xlabels=ticks(xmin,xmax).map(v=>`<text x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
+    const ylabels=ticks(ymin,ymax).map(v=>`<text x="${pad.l-10}" y="${sy(v)+4}" text-anchor="end" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
     
     $("#scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="scatter-svg" id="scsvg">
-      <rect width="${W}" height="${H}" fill="rgba(255,255,255,0.02)" rx="8" pointer-events="none" />
-      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.1)"/>
-      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.1)"/>
-      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.3)"/>
-      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.3)"/>
+      <rect width="${W}" height="${H}" fill="rgba(255,255,255,0.01)" rx="8" pointer-events="none" />
+      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
+      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
+      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.15)"/>
+      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.15)"/>
       ${xlabels}${ylabels}
-      <text class="axttl" x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-12}" text-anchor="middle" font-weight="700" fill="#fff">${esc(PMLABEL[ax])} →</text>
-      <text class="axttl" transform="rotate(-90 20 ${pad.t+(H-pad.t-pad.b)/2})" x="20" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle" font-weight="700" fill="#fff">${esc(PMLABEL[ay])} →</text>
+      <text x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-8}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL[ax].toUpperCase())} →</text>
+      <text transform="rotate(-90 16 ${pad.t+(H-pad.t-pad.b)/2})" x="16" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL[ay].toUpperCase())} →</text>
       ${dotsHtml}
       ${labelsHtml}
-      <g id="tip" style="display:none"><rect rx="6" id="tipbg" fill="#11141a" stroke="#2a2f3a"/><text id="tiptx"></text></g>
+      <g id="tip" style="display:none"><rect rx="8" id="tipbg" fill="#172232" stroke="#2b394e" filter="drop-shadow(0px 4px 12px rgba(0,0,0,0.5))"/><text id="tiptx" font-size="12" fill="#fff"></text></g>
     </svg>`;
     
-    $("#scount").textContent = `Displaying top matrix clusters (${plottedPts.length} elite performers plotted)`;
+    $("#scount").textContent = `Plotted Cluster Density: ${plottedPts.length} elite baseline targets matching scope profiles.`;
     
-    // Wire tooltip interaction layers securely 
     const svg=$("#scsvg"), tip=$("#tip",svg), tbg=$("#tipbg",svg), ttx=$("#tiptx",svg);
     svg.querySelectorAll(".dot").forEach(c=>{
       c.addEventListener("mousemove",()=>{
         const p=plottedPts[+c.dataset.i];
-        ttx.innerHTML=`<tspan x="0" dy="0" style="font-weight:800">${esc(p.name)}</tspan>`+
-          `<tspan x="0" dy="16" fill="#9aa3b2">${esc(p.team)} · ${esc(p.pos)}</tspan>`+
-          `<tspan x="0" dy="16">${esc(PMLABEL[ay])}: ${fmtN(p[ay])}</tspan>`+
-          `<tspan x="0" dy="16">${esc(PMLABEL[ax])}: ${fmtN(p[ax])}</tspan>`;
-        const bb=ttx.getBBox?ttx.getBBox():{width:140,height:70};
-        let tx=+c.getAttribute("cx")+14, ty=+c.getAttribute("cy")-10;
-        if(tx+bb.width+16>W) tx=+c.getAttribute("cx")-bb.width-16;
+        ttx.innerHTML=`<tspan x="12" dy="4" style="font-weight:800; fill:var(--lime); font-size:13px">${esc(p.name)}</tspan>`+
+          `<tspan x="12" dy="18" fill="#8a99ad" font-size="11">${esc(p.team)} · ${esc(p.pos)}</tspan>`+
+          `<tspan x="12" dy="18" fill="#fff">${esc(PMLABEL[ay])}: ${fmtN(p[ay])}</tspan>`+
+          `<tspan x="12" dy="16" fill="#fff">${esc(PMLABEL[ax])}: ${fmtN(p[ax])}</tspan>`;
+        const bb=ttx.getBBox?ttx.getBBox():{width:160,height:75};
+        let tx=+c.getAttribute("cx")+16, ty=+c.getAttribute("cy")-20;
+        if(tx+bb.width+24>W) tx=+c.getAttribute("cx")-bb.width-24;
         if(ty<10) ty=12;
         tip.setAttribute("transform",`translate(${tx},${ty})`);
-        ttx.setAttribute("x",8); ttx.setAttribute("y",16);
-        tbg.setAttribute("x",0); tbg.setAttribute("y",0);
-        tbg.setAttribute("width",bb.width+16); tbg.setAttribute("height",bb.height+14);
+        tbg.setAttribute("x",0); tbg.setAttribute("y",-10);
+        tbg.setAttribute("width",bb.width+24); tbg.setAttribute("height",bb.height+20);
         tip.style.display="block";
       });
       c.addEventListener("mouseleave",()=>tip.style.display="none");
@@ -433,38 +683,44 @@ function players(){
   const renderTable=(rows)=>{
     const tbody=$("#pt tbody");
     const r2=[...rows].sort((a,b)=>cmp(a[sortK],b[sortK])*sortDir);
-    
-    // Slice table rows down using expandable variable limits
     const visibleRows = r2.slice(0, playerLimit);
     
-    tbody.innerHTML = visibleRows.map(p=>`<tr class="${p.name===selCode?"selrow":""}" data-n="${esc(p.name)}">
-      <td class="name">${esc(p.name)}</td>
-      <td><span class="flgcell">${p.flag || ''}${esc(p.team)}</span></td>
-      <td>${esc(p.pos ? p.pos[0] : '–')}</td><td class="num">${fmtN(p.age,0)}</td>
-      <td class="num">${fmtN(p.min,0)}</td><td class="num">${fmtN(p.gs,0)}</td>
-      <td class="num">${fmtN(p.g,0)}</td><td class="num">${fmtN(p.a,0)}</td>
-      <td class="num">${fmtN(p.xg)}</td><td class="num hl">${fmtN(p.xg90)}</td>
-      <td class="num">${fmtN(p.sh90)}</td><td class="num">${fmtN(p.sot90)}</td>
-      <td class="num">${fmtN(p.kp90)}</td><td class="num">${fmtN(p.tk90)}</td>
-      <td class="num">${fmtN(p.rt)}</td></tr>`).join("")
-      || `<tr><td colspan="15" class="muted" style="text-align:center;padding:24px">No players match current metrics matrix configuration.</td></tr>`;
+    tbody.innerHTML = visibleRows.map(p=> {
+      const isSelected = p.name === selCode;
+      const posShort = p.pos ? p.pos.substring(0,2).toUpperCase() : '–';
+      return `<tr class="${isSelected?"selrow":""}" data-n="${esc(p.name)}" style="cursor:pointer;">
+        <td class="name" style="font-weight:700;">${esc(p.name)}</td>
+        <td><span class="flgcell" style="display:flex; align-items:center; gap:6px;">${p.flag || ''}${esc(p.team)}</span></td>
+        <td><span class="pos-badge pos-${p.pos ? p.pos.substring(0,2).toUpperCase() : 'Other'}">${posShort}</span></td>
+        <td class="num">${fmtN(p.age,0)}</td>
+        <td class="num" style="color:#fff; font-weight:600;">${fmtN(p.min,0)}</td>
+        <td class="num">${fmtN(p.gs,0)}</td>
+        <td class="num">${fmtN(p.g,0)}</td>
+        <td class="num">${fmtN(p.a,0)}</td>
+        <td class="num">${fmtN(p.xg)}</td>
+        <td class="num hl" style="font-weight:700; color:var(--lime); background: rgba(204,255,0,0.02);">${fmtN(p.xg90)}</td>
+        <td class="num">${fmtN(p.sh90)}</td>
+        <td class="num">${fmtN(p.sot90)}</td>
+        <td class="num">${fmtN(p.kp90)}</td>
+        <td class="num">${fmtN(p.tk90)}</td>
+        <td class="num" style="font-weight:800; color:#fff;">${fmtN(p.rt)}</td></tr>`;
+    }).join("") || `<tr><td colspan="15" class="muted" style="text-align:center;padding:32px; background:#0e131f;">No active player index profiles match criteria configuration deck.</td></tr>`;
     
-    // Render expandable layout UI control tray contextually
     const controlBox = $("#table-expansion-control");
     if (r2.length > playerLimit) {
-      controlBox.innerHTML = `<button id="expandPlayersBtn" class="btn lime sm">Show More Players (+50)</button> <span class="muted" style="margin-left:12px">Showing ${playerLimit} of ${r2.length} profiles</span>`;
+      controlBox.innerHTML = `<button id="expandPlayersBtn" class="btn lime sm" style="margin:0; border-radius:8px;">Load Next 50 Roster Profiles (+50)</button> <span class="text-muted" style="font-size:13px; font-weight:600;">Showing ${playerLimit} of ${r2.length} Available Metrics Matrices</span>`;
       $("#expandPlayersBtn").addEventListener("click", () => {
         playerLimit += 50;
         renderTable(rows);
       });
     } else {
-      controlBox.innerHTML = r2.length ? `<span class="muted" style="font-size:13px">Displaying all ${r2.length} matching data profiles.</span>` : "";
+      controlBox.innerHTML = r2.length ? `<span class="text-muted" style="font-size:13px; font-weight:600; width:100%; text-align:center;">Displaying total complete log of all ${r2.length} matching data profiles.</span>` : "";
     }
 
     tbody.querySelectorAll("tr[data-n]").forEach(tr=>tr.addEventListener("click",()=>{
       selCode = selCode===tr.dataset.n?null:tr.dataset.n; refresh();
     }));
-    document.querySelectorAll("#pt th").forEach(th=>th.classList.toggle("active",th.dataset.k===sortK));
+    document.querySelectorAll("#pt th").forEach(th=>th.classList.toggle("active-sort-th", th.dataset.k===sortK));
   };
 
   const refresh=()=>{
@@ -472,10 +728,9 @@ function players(){
     drawScatter(rows); 
     renderTable(rows);
     
-    // Update live dynamic layout dashboard metrics tracker elements text tags explicitly
     $("#hud-y-label").textContent = PMLABEL[ay];
     $("#hud-x-label").textContent = PMLABEL[ax];
-    $("#selinfo").innerHTML = selCode?`Selected Profile: <b>${esc(selCode)}</b> — tap again to clear`: "";
+    $("#selinfo").innerHTML = selCode?`Active Matrix Highlight Filter locked on: <b style="color:var(--mag); font-weight:800;">${esc(selCode)}</b>`: "No target locked on matrix row. Select node to cross-reference.";
   };
 
   $("#psearch").addEventListener("input",e=>{q=e.target.value.toLowerCase();refresh()});
@@ -492,6 +747,8 @@ function players(){
 
 /* ---------- TEAM STATS ---------- */
 function stats(){
+  injectGlobalDashboardStyles();
+  
   const cs = D.country_stats.slice();
   const metrics = [
     ["goals_scored","Goals scored",-1],["goals_conceded","Goals conceded",1],
@@ -500,28 +757,50 @@ function stats(){
     ["average_possession","Possession %",-1],["win_percentage","Win %",-1],
     ["cards_total","Cards",1],
   ];
+  
   app.innerHTML = `
-    <div class="kicker">Tournament Matrix Analytics Hub</div>
-    <div class="sec-h"><h1>Team Data Leaderboards</h1></div>
-    
-    <div class="stats-dashboard-banner">
-      <div class="filter-selector-block">
-        <span class="panel-tag-title">Rank Standings By:</span>
-        <select id="metric" class="modern-dropdown-select">${metrics.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select>
+    <div class="dashboard-wrapper">
+      <div>
+        <div class="kicker">Tournament Matrix Analytics Hub</div>
+        <div class="sec-h"><h1>Team Data Leaderboards</h1></div>
       </div>
-    </div>
+      
+      <div class="premium-hud" style="border-left-color: var(--lime);">
+        <div class="hud-title" style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between; flex-wrap:wrap;">
+          <span>Rank Structural Standings Dataset By Core Condition Parameter:</span>
+          <select id="metric" style="background:#1c2635; border:1px solid var(--card-border); color:var(--lime); padding:8px 16px; border-radius:8px; font-weight:700; outline:none; cursor:pointer;">
+            ${metrics.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}
+          </select>
+        </div>
+      </div>
 
-    <div id="podium-highlights-container" class="podium-highlights-grid"></div>
+      <div id="podium-highlights-container" class="championship-podium-deck"></div>
 
-    <div class="tbl-wrap"><table class="dt ranking-table-v2" id="tt">
-      <thead><tr><th class="num">Rank</th><th data-k="name" data-t="s">Team</th>
-      <th class="num" data-k="matches_played">P</th><th class="num" data-k="wins">W</th>
-      <th class="num" data-k="draws">D</th><th class="num" data-k="losses">L</th>
-      <th class="num" data-k="goals_scored">GF</th><th class="num" data-k="goals_conceded">GA</th>
-      <th class="num" data-k="goal_difference">GD</th><th class="num" data-k="points_per_game">PPG</th>
-      <th class="num" data-k="xg_for_avg_overall">xG</th><th class="num" data-k="clean_sheets">CS</th>
-      <th class="num" data-k="average_possession">Poss %</th></tr></thead>
-      <tbody></tbody></table></div>`;
+      <div class="table-container-card">
+        <div class="tbl-wrap">
+          <table class="dt adv ranking-table-v2" id="tt">
+            <thead>
+              <tr>
+                <th class="num" style="width: 60px;">Rank</th>
+                <th data-k="name" data-t="s">Team Representation</th>
+                <th class="num" data-k="matches_played">P</th>
+                <th class="num" data-k="wins">W</th>
+                <th class="num" data-k="draws">D</th>
+                <th class="num" data-k="losses">L</th>
+                <th class="num" data-k="goals_scored">GF</th>
+                <th class="num" data-k="goals_conceded">GA</th>
+                <th class="num" data-k="goal_difference">GD</th>
+                <th class="num" data-k="points_per_game">PPG</th>
+                <th class="num" data-k="xg_for_avg_overall">xG/m</th>
+                <th class="num" data-k="clean_sheets">CS</th>
+                <th class="num" data-k="average_possession">Poss %</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
       
   let sortK="goals_scored", dir=-1;
   const dirMap=Object.fromEntries(metrics.map(([k,,d])=>[k,d]));
@@ -531,59 +810,60 @@ function stats(){
     let rows=[...cs];
     rows.sort((a,b)=>cmp(a[sortK],b[sortK])*dir);
     
-    // Compute exact maximum baseline boundary limits of active sorted column key to draw contextual analytics tracking bars inside matrix layout rows
     const allVals = rows.map(r => Math.abs(parseFloat(r[sortK]) || 0));
     const maxMetricVal = Math.max(0.001, ...allVals);
 
-    // Build World Class Dashboard Podium Block Cards Framework
     const activeLabel = metrics.find(m => m[0] === sortK)[1];
     const top3 = rows.slice(0, 3);
     let podiumHtml = "";
     
-    const medalIcons = ["🥇", "🥈", "🥉"];
+    const crowns = ["🥇", "🥈", "🥉"];
     top3.forEach((team, idx) => {
       podiumHtml += `
-        <div class="podium-card medal-${idx + 1}">
-          <div class="podium-rank-badge">${medalIcons[idx]} Rank ${idx + 1}</div>
-          <div class="podium-team-identity">
-            <span class="podium-flag">${team.flag || ''}</span>
-            <span class="podium-name">${esc(team.name)}</span>
+        <div class="podium-showcase-card rank-${idx + 1}">
+          <div class="podium-crown">${crowns[idx]}</div>
+          <div class="podium-nation-title">
+            <span>${team.flag || ''}</span>
+            <span>${esc(team.name)}</span>
           </div>
-          <div class="podium-value-metric">
-            <span class="val-num">${fmt(team[sortK])}</span>
-            <span class="val-label">${activeLabel}</span>
+          <div class="podium-metric-display">
+            <span class="big-value">${fmt(team[sortK])}</span>
+            <span class="sub-label">${activeLabel}</span>
           </div>
         </div>
       `;
     });
     $("#podium-highlights-container").innerHTML = podiumHtml;
 
-    // Build main table structure content layout loop matrix
     tbody.innerHTML=rows.map((r,i)=>{
       const rawVal = parseFloat(r[sortK]) || 0;
       const barPercentage = Math.min(100, Math.max(3, (Math.abs(rawVal) / maxMetricVal) * 100));
       
-      // Inline modern data micro bar indicator element representation tracking metric magnitude
-      const renderBar = `<div class="table-inline-perf-bar" style="width: ${barPercentage}%; background-color: var(--lime, #ccff00); height: 4px; margin-top: 4px; border-radius: 2px; opacity: 0.75;"></div>`;
+      const renderBar = `
+        <div class="perf-bar-track">
+          <div class="perf-bar-fill" style="width: ${barPercentage}%;"></div>
+        </div>
+      `;
 
       return `<tr>
-        <td class="rk num" style="font-weight: 800; color: var(--lime);">${i+1}</td>
+        <td class="rk num" style="font-weight: 800; color: var(--lime); font-size:15px; text-align:center;">${i+1}</td>
         <td class="name">
-          <a class="flgcell" href="#/country/${r.code}" style="font-weight:700;">${r.flag || ''}${esc(r.name)}</a>
+          <a class="flgcell" href="#/country/${r.code}" style="font-weight:700; color:#fff; text-decoration:none; display:block;">${r.flag || ''} ${esc(r.name)}</a>
           ${renderBar}
         </td>
-        <td class="num">${fmt(r.matches_played)}</td><td class="num">${fmt(r.wins)}</td>
-        <td class="num">${fmt(r.draws)}</td><td class="num">${fmt(r.losses)}</td>
+        <td class="num" style="font-weight:600;">${fmt(r.matches_played)}</td>
+        <td class="num">${fmt(r.wins)}</td>
+        <td class="num">${fmt(r.draws)}</td>
+        <td class="num">${fmt(r.losses)}</td>
         <td class="num ${sortK==='goals_scored'?'active-sort-cell':''}">${fmt(r.goals_scored)}</td>
         <td class="num ${sortK==='goals_conceded'?'active-sort-cell':''}">${fmt(r.goals_conceded)}</td>
         <td class="num ${sortK==='goal_difference'?'active-sort-cell':''}">${fmt(r.goal_difference)}</td>
-        <td class="num ${sortK==='points_per_game'?'active-sort-cell':''}">${fmt(r.points_per_game)}</td>
+        <td class="num ${sortK==='points_per_game'?'active-sort-cell':''}" style="font-weight:700;">${fmt(r.points_per_game)}</td>
         <td class="num ${sortK==='xg_for_avg_overall'?'active-sort-cell':''}">${fmt(r.xg_for_avg_overall)}</td>
         <td class="num ${sortK==='clean_sheets'?'active-sort-cell':''}">${fmt(r.clean_sheets)}</td>
         <td class="num ${sortK==='average_possession'?'active-sort-cell':''}">${fmt(r.average_possession)}%</td></tr>`;
     }).join("");
     
-    // Explicitly toggle active columns layout header highlight styles tags safely
     document.querySelectorAll("#tt th[data-k]").forEach(th => {
       th.classList.toggle("active-sort-th", th.dataset.k === sortK);
     });
@@ -591,7 +871,7 @@ function stats(){
 
   $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1; draw();});
   document.querySelectorAll("#tt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
-    const k=th.dataset.k; if(sortK===k)dir*=-1; else{sortK=k;dir=th.dataset.t==="s"?1:-1;}draw()}));
+    const k=th.dataset.k; if(sortK===k)dir*=-1; else {sortK=k;dir=th.dataset.t==="s"?1:-1;}draw()}));
   draw();
 }
 
