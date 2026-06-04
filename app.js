@@ -11,217 +11,119 @@ const teamsArr = () => Object.values(D.teams);
 const byCode = c => D.teams[c];
 const groupOf = code => byCode(code)?.group;
 
-/* ---------- Global Premium Styles Injector ---------- */
+/* ---------- shared dashboard styles (stats + players) ---------- */
 const injectGlobalDashboardStyles = () => {
   if (document.getElementById("wc26-dashboard-styles")) return;
   const style = document.createElement("style");
   style.id = "wc26-dashboard-styles";
-  style.innerHTML = `
-    :root {
-      --bg-dark: #0b0f17;
-      --card-bg: #131a26;
-      --card-border: #222d3f;
-      --text-muted: #8a99ad;
-      --lime-glow: rgba(204, 255, 0, 0.15);
-      --mag-glow: rgba(255, 0, 85, 0.15);
-    }
-    
-    /* Dashboard Utility Grid Layouts */
-    .dashboard-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      font-family: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
-      color: #f1f5f9;
-      animation: fadeIn 0.4s ease-out;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    
-    /* Premium Glassmorphic Controls */
-    .control-deck {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      align-items: end;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .control-group label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      font-weight: 700;
-    }
-    .control-deck input, .control-deck select {
-      background: #1c2635;
-      border: 1px solid var(--card-border);
-      color: #fff;
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 14px;
-      transition: all 0.2s ease;
-      width: 100%;
-    }
-    .control-deck input:focus, .control-deck select:focus {
-      outline: none;
-      border-color: var(--lime, #ccff00);
-      box-shadow: 0 0 0 3px var(--lime-glow);
-    }
-    
-    /* Modern Dynamic HUD Banner */
-    .premium-hud {
-      background: linear-gradient(135deg, #1a2333 0%, #131a26 100%);
-      border-left: 4px solid var(--lime, #ccff00);
-      border-radius: 12px;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    .hud-title { font-size: 15px; font-weight: 600; }
-    .hud-highlight { color: var(--lime, #ccff00); font-weight: 800; }
-    
-    /* Scatter Plot Masterpiece Container */
-    .scatter-container-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-    }
-    .scatter-axis-selectors {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .axis-pill-selector {
-      background: #1c2635;
-      border: 1px solid var(--card-border);
-      border-radius: 30px;
-      padding: 6px 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-    .axis-pill-selector select {
-      background: transparent;
-      border: none;
-      color: var(--lime, #ccff00);
-      font-weight: 700;
-      cursor: pointer;
-      outline: none;
-    }
-    .scatter-view-wrapper {
-      background: #0e131f;
-      border-radius: 12px;
-      padding: 10px;
-      position: relative;
-      overflow: hidden;
-      border: 1px solid #1c2635;
-    }
-    .scatter-svg { width: 100%; height: auto; display: block; }
-    
-    /* High Fidelity Dynamic Tables */
-    .table-container-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-    }
-    table.dt.adv { width: 100%; border-collapse: collapse; margin: 0; font-size: 14px; }
-    table.dt.adv th {
-      background: #182232;
-      color: var(--text-muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 11px;
-      letter-spacing: 0.05em;
-      padding: 16px;
-      text-align: left;
-      border-bottom: 1px solid var(--card-border);
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    table.dt.adv th:hover { background: #202c3f; color: #fff; }
-    table.dt.adv th.active-sort-th { color: var(--lime, #ccff00); background: #1c293a; }
-    table.dt.adv td { padding: 14px 16px; border-bottom: 1px solid #182232; transition: all 0.15s; }
-    table.dt.adv tbody tr:hover td { background: #1b2637; }
-    table.dt.adv tr.selrow td { background: rgba(255, 0, 85, 0.08) !important; border-bottom-color: rgba(255, 0, 85, 0.3); }
-    
-    /* Position Micro Badges */
-    .pos-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 6px;
-      text-transform: uppercase;
-    }
-    .pos-GK { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-    .pos-DF { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-    .pos-MF { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
-    .pos-FW { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+  style.textContent = `
+    /* Built on the site's own tokens so these pages match the broadcast theme. */
+    .dashboard-wrapper{display:flex;flex-direction:column;gap:22px;animation:dashIn .4s ease}
+    @keyframes dashIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-    /* Team Statistics Podium Upgrades */
-    .championship-podium-deck {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      align-items: end;
-      margin: 10px 0;
-    }
-    .podium-showcase-card {
-      background: linear-gradient(180deg, #182232 0%, var(--card-bg) 100%);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 24px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      transition: transform 0.3s ease;
-    }
-    .podium-showcase-card:hover { transform: translateY(-4px); }
-    .podium-showcase-card.rank-1 { border-top: 4px solid #ffd700; order: 2; padding: 36px 24px; }
-    .podium-showcase-card.rank-2 { border-top: 4px solid #c0c0c0; order: 1; }
-    .podium-showcase-card.rank-3 { border-top: 4px solid #cd7f32; order: 3; }
-    
-    .podium-crown { font-size: 24px; margin-bottom: 8px; block-size: auto; }
-    .podium-nation-title { font-size: 18px; font-weight: 800; margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px;}
-    .podium-metric-display { background: #0e131f; border-radius: 10px; padding: 10px; margin-top: 14px; }
-    .podium-metric-display .big-value { font-size: 28px; font-weight: 900; color: var(--lime, #ccff00); display: block; }
-    .podium-metric-display .sub-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+    /* lead-in: plain-language summary of what the page shows */
+    .dash-lead{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap}
+    .dash-lead .lead-copy{max-width:640px}
+    .dash-lead p{color:var(--mut);font-size:14.5px;margin:8px 0 0}
 
-    /* Performance Progress Tracking Micro Elements */
-    .perf-bar-track { background: #1c2635; border-radius: 3px; height: 5px; width: 100%; margin-top: 6px; overflow: hidden; }
-    .perf-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--lime, #ccff00), #a3e635); box-shadow: 0 0 8px var(--lime); }
-    
-    /* Responsive Viewport Optimizations */
-    @media (max-width: 800px) {
-      .championship-podium-deck { grid-template-columns: 1fr; }
-      .podium-showcase-card.rank-1 { order: 1; }
-      .podium-showcase-card.rank-2 { order: 2; }
-      .podium-showcase-card.rank-3 { order: 3; }
-      .control-deck { grid-template-columns: 1fr; }
+    /* control bar */
+    .ctrlbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;
+      background:linear-gradient(180deg,var(--ink2),var(--ink));border:1px solid var(--line);
+      border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow)}
+    .ctrl{display:flex;flex-direction:column;gap:7px;min-width:0}
+    .ctrl label{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:800}
+    .ctrl label b{color:var(--lime);font-family:"Spline Sans Mono",monospace;font-weight:700}
+    .ctrl input,.ctrl select{background:var(--ink3);border:1px solid var(--line);color:var(--txt);
+      padding:10px 12px;border-radius:9px;font-size:14px;font-family:inherit;width:100%;transition:.16s}
+    .ctrl input:focus,.ctrl select:focus{outline:none;border-color:var(--lime);box-shadow:0 0 0 3px rgba(200,255,0,.14)}
+    .ctrl input[type=range]{padding:0;accent-color:var(--lime);height:22px}
+    .ctrl select{cursor:pointer}
+
+    /* chart card */
+    .chart-card{background:linear-gradient(180deg,var(--ink2),var(--ink));border:1px solid var(--line);
+      border-radius:18px;padding:20px 20px 16px;box-shadow:var(--shadow)}
+    .chart-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+    .chart-head h3{font-family:"Anton",sans-serif;font-size:20px;text-transform:uppercase;letter-spacing:.02em}
+    .axis-picks{display:flex;gap:10px;flex-wrap:wrap}
+    .axis-pick{display:flex;align-items:center;gap:7px;background:var(--ink3);border:1px solid var(--line);
+      border-radius:999px;padding:5px 6px 5px 12px;font-size:11px;font-weight:800;text-transform:uppercase;
+      letter-spacing:.06em;color:var(--mut)}
+    .axis-pick .ax-tag{color:var(--lime)} .axis-pick.y .ax-tag{color:var(--mag)}
+    .axis-pick select{background:var(--ink2);border:1px solid var(--line);color:var(--txt);border-radius:999px;
+      padding:5px 9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;outline:none}
+    .axis-pick select:focus{border-color:var(--lime)}
+    .chart-stage{background:#080a0d;border:1px solid var(--line);border-radius:12px;padding:8px;overflow:hidden}
+    .chart-svg{width:100%;height:auto;display:block;touch-action:none}
+    .chart-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+      margin-top:10px;font-size:12px;color:var(--mut)}
+    .chart-foot .legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+    .chart-foot .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+    .chart-foot .hint{color:var(--mut2)}
+    .sel-note{color:var(--lime);font-weight:700}
+
+    /* SVG primitives */
+    .chart-svg .axis{stroke:var(--line);stroke-width:1}
+    .chart-svg .guide{stroke:rgba(255,255,255,.10);stroke-width:1;stroke-dasharray:4 5}
+    .chart-svg .tick{fill:var(--mut2);font-size:10px;font-family:"Spline Sans Mono",monospace}
+    .chart-svg .axttl{fill:var(--mut);font-size:11px;font-weight:800;font-family:"Hanken Grotesque",sans-serif;
+      text-transform:uppercase;letter-spacing:.08em}
+    .chart-svg .quad{fill:var(--mut2);font-size:9.5px;font-weight:700;font-family:"Hanken Grotesque",sans-serif;
+      text-transform:uppercase;letter-spacing:.08em;opacity:.65}
+    .chart-svg .dot{cursor:pointer;transition:r .15s,fill-opacity .15s}
+    .chart-svg .lbl{font-family:"Hanken Grotesque",sans-serif;font-weight:700;pointer-events:none}
+    .chart-svg .code{font-family:"Spline Sans Mono",monospace;font-weight:700;pointer-events:none}
+    .chart-svg #tiptx,.chart-svg #ttiptx{font-family:"Hanken Grotesque",sans-serif}
+
+    /* podium */
+    .podium-deck{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:end}
+    .podium-card{position:relative;overflow:hidden;text-align:center;border-radius:16px;padding:22px 18px;
+      background:linear-gradient(180deg,var(--ink2),var(--ink));border:1px solid var(--line);box-shadow:var(--shadow);
+      transition:transform .2s}
+    .podium-card:hover{transform:translateY(-4px)}
+    .podium-card.p1{order:2;border-top:3px solid var(--gold);padding-top:32px}
+    .podium-card.p2{order:1;border-top:3px solid #cdd3da}
+    .podium-card.p3{order:3;border-top:3px solid #cd7f32}
+    .podium-card .medal{font-size:26px;line-height:1}
+    .podium-card .pflag{font-size:34px;margin:6px 0 2px;line-height:1}
+    .podium-card .pname{font-family:"Anton",sans-serif;font-size:21px;text-transform:uppercase;line-height:1;margin-top:4px}
+    .podium-card .pgroup{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+    .podium-card .pval{display:block;font-family:"Anton",sans-serif;font-size:40px;color:var(--lime);line-height:1;margin-top:14px}
+    .podium-card .plabel{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+    .podium-card .prec{font-family:"Spline Sans Mono",monospace;font-size:11.5px;color:var(--mut);margin-top:10px}
+    .podium-card .prec b{color:var(--txt)}
+
+    /* tables — extend the base .dt.adv */
+    table.dt.adv th.sortk{color:var(--lime)}
+    table.dt.adv td.colk{color:var(--lime);font-weight:800;background:rgba(200,255,0,.05)}
+    table.dt.adv tr.selrow td{background:rgba(255,45,135,.10)}
+    table.dt.adv tr.selrow td:first-child{box-shadow:inset 3px 0 0 var(--mag)}
+    .rankcell{font-family:"Anton",sans-serif;font-size:18px;color:var(--mut);text-align:center}
+    .rankcell.top{color:var(--lime)}
+    .teamcell{display:flex;flex-direction:column;gap:6px;min-width:160px}
+    .teamcell a{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--txt)}
+    .teamcell a:hover{color:var(--lime)}
+    .bar-track{height:5px;border-radius:3px;background:var(--ink3);overflow:hidden}
+    .bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--lime),#9fd400)}
+
+    /* position badges */
+    .pos-badge{display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;
+      padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+    .pos-GK{background:rgba(255,194,75,.16);color:var(--gold)}
+    .pos-DE{background:rgba(51,224,255,.15);color:var(--cyan)}
+    .pos-MI{background:rgba(179,136,255,.16);color:#b388ff}
+    .pos-FO{background:rgba(57,224,127,.15);color:var(--conf-CAF)}
+
+    .table-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+      padding:14px 16px;border-top:1px solid var(--line);background:var(--ink2);font-size:13px;color:var(--mut)}
+    .table-foot .btn{padding:8px 14px}
+
+    @media(max-width:780px){
+      .podium-deck{grid-template-columns:1fr}
+      .podium-card.p1,.podium-card.p2,.podium-card.p3{order:0;padding-top:22px}
+      .ctrlbar{grid-template-columns:1fr 1fr}
+      .chart-head h3{font-size:18px}
     }
+    @media(max-width:520px){.ctrlbar{grid-template-columns:1fr}}
   `;
   document.head.appendChild(style);
 };
@@ -504,256 +406,263 @@ const PMETRICS = [
 const PMLABEL = Object.fromEntries(PMETRICS);
 const fmtN = (v,d=2)=> v==null?"–":(typeof v==="number"? (Number.isInteger(v)?v:v.toFixed(d)) : v);
 
-let playerLimit = 25; // Default visible rows for table expansion control
+// shared axis bounds: pad the real data range, but keep a 0 baseline when data sits near zero
+function axisBounds(vals){
+  if(!vals.length) return [0,1];
+  let lo=Math.min(...vals), hi=Math.max(...vals);
+  if(lo===hi){ lo-=1; hi+=1; }
+  const pad=(hi-lo)*0.12 || 1;
+  let lo2=lo-pad; if(lo>=0 && lo2<0) lo2=0;
+  return [lo2, hi+pad];
+}
 
 function players(){
   injectGlobalDashboardStyles();
-  
+
+  // local state (no leaky globals — resets cleanly on every visit)
+  let q="", pos="", team="", minMin=270, topN=20;
+  let ax="sh90", ay="xg90";
+  let sortK="xg90", sortDir=-1, selName=null, tableLimit=25;
+
+  const base = D.players.slice();
+  const filtered = ()=> base.filter(p=>
+      (!pos||p.pos===pos) && (!team||p.code===team) &&
+      (p.min||0)>=minMin &&
+      ((p.name||"").toLowerCase().includes(q) || (p.nat||"").toLowerCase().includes(q)));
+
   app.innerHTML = `
     <div class="dashboard-wrapper">
-      <div>
-        <div class="kicker">Tournament Performance Matrix</div>
-        <div class="sec-h"><h1>Player Advanced Analytics</h1><span class="pill">${D.players.length} active metrics profiles</span></div>
-      </div>
-      
-      <div id="active-filter-hud" class="premium-hud">
-         <div class="hud-title">Visualizing Portfolio Coordinate Clusters: <span id="hud-y-label" class="hud-highlight">xG / 90</span> <span class="muted">vs</span> <span id="hud-x-label" class="hud-highlight">Shots / 90</span></div>
-         <div id="selinfo" class="selinfo text-muted"></div>
+      <div class="dash-lead">
+        <div class="lead-copy">
+          <div class="kicker">Player Statistics</div>
+          <div class="sec-h"><h1>Player Stats</h1><span class="pill" id="ptotal"></span></div>
+          <p>Every metric is per-90-minutes unless marked as a total, so players are compared on equal footing. Use the chart to spot the standout performers, then read the full table below. Click any player to highlight them everywhere.</p>
+        </div>
       </div>
 
-      <div class="control-deck">
-        <div class="control-group">
-          <label>Search Directory</label>
-          <input id="psearch" placeholder="Search player or nationality…">
+      <div class="ctrlbar">
+        <div class="ctrl">
+          <label>Search player or nation</label>
+          <input id="psearch" placeholder="e.g. Mbappé, Brazil…">
         </div>
-        <div class="control-group">
-          <label>Tactical Position</label>
+        <div class="ctrl">
+          <label>Position</label>
           <select id="ppos"><option value="">All positions</option>
             <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select>
         </div>
-        <div class="control-group">
-          <label>National Representative</label>
+        <div class="ctrl">
+          <label>Team</label>
           <select id="pteam"><option value="">All teams</option>
             ${teamsArr().filter(t=>t.squad && t.squad.length).sort((a,b)=>a.name.localeCompare(b.name))
               .map(t=>`<option value="${t.code}">${esc(t.name)}</option>`).join("")}</select>
         </div>
-        <div class="control-group">
-          <label>Min Minutes Logged (<b id="mmval">270</b>m)</label>
-          <input type="range" id="pmin" min="0" max="900" step="90" value="270" style="margin: 12px 0;">
+        <div class="ctrl">
+          <label>Minimum minutes played: <b id="mmval">270</b></label>
+          <input type="range" id="pmin" min="0" max="900" step="90" value="270">
         </div>
       </div>
 
-      <div class="scatter-container-card">
-        <div class="scatter-axis-selectors">
-          <div class="axis-pill-selector">
-            <span>Vertical Axis (Y):</span>
-            <select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="xg90"?" selected":""}>${l}</option>`).join("")}</select>
+      <div class="chart-card">
+        <div class="chart-head">
+          <h3 id="chart-title">xG / 90 vs Shots / 90</h3>
+          <div class="axis-picks">
+            <div class="axis-pick y"><span class="ax-tag">Y ↑</span>
+              <select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="xg90"?" selected":""}>${l}</option>`).join("")}</select></div>
+            <div class="axis-pick"><span class="ax-tag">X →</span>
+              <select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="sh90"?" selected":""}>${l}</option>`).join("")}</select></div>
+            <div class="axis-pick"><span class="ax-tag">Show</span>
+              <select id="atop">
+                <option value="10">Top 10</option>
+                <option value="15">Top 15</option>
+                <option value="20" selected>Top 20</option>
+                <option value="30">Top 30</option>
+              </select></div>
           </div>
-          <div class="axis-pill-selector">
-            <span>Horizontal Axis (X):</span>
-            <select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="sh90"?" selected":""}>${l}</option>`).join("")}</select>
-          </div>
         </div>
-        <div class="scatter-view-wrapper">
-          <div id="scatter"></div>
+        <div class="chart-stage"><div id="scatter"></div></div>
+        <div class="chart-foot">
+          <span class="legend">
+            <span><i style="background:var(--lime)"></i>Player</span>
+            <span><i style="background:var(--mag)"></i>Selected</span>
+            <span id="scount"></span>
+          </span>
+          <span class="hint">Dashed lines mark the median of the players shown · hover a dot for detail</span>
         </div>
-        <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 12px;" class="text-muted">
-          <span id="scount"></span>
-          <span>💡 Hover points for tactical breakdown card · Click to lock highlight row</span>
-        </div>
+        <div class="chart-foot" style="margin-top:4px"><span class="sel-note" id="selinfo"></span></div>
       </div>
 
-      <div class="table-container-card">
+      <div class="card" style="overflow:hidden;padding:0">
         <div class="tbl-wrap">
           <table class="dt adv" id="pt">
-            <thead>
-              <tr>
-                <th data-k="name" data-t="s">Player</th>
-                <th data-k="team" data-t="s">Team</th>
-                <th data-k="pos" data-t="s">Pos</th>
-                <th class="num" data-k="age">Age</th>
-                <th class="num" data-k="min">Min</th>
-                <th class="num" data-k="gs">St</th>
-                <th class="num" data-k="g">G</th>
-                <th class="num" data-k="a">A</th>
-                <th class="num" data-k="xg">xG</th>
-                <th class="num hl" data-k="xg90">xG/90</th>
-                <th class="num" data-k="sh90">Sh/90</th>
-                <th class="num" data-k="sot90">SoT/90</th>
-                <th class="num" data-k="kp90">KP/90</th>
-                <th class="num" data-k="tk90">Tk/90</th>
-                <th class="num" data-k="rt">Rating</th>
-              </tr>
-            </thead>
+            <thead><tr>
+              <th data-k="name" data-t="s">Player</th>
+              <th data-k="team" data-t="s">Team</th>
+              <th data-k="pos" data-t="s">Pos</th>
+              <th class="num" data-k="age">Age</th>
+              <th class="num" data-k="min">Min</th>
+              <th class="num" data-k="gs">St</th>
+              <th class="num" data-k="g">G</th>
+              <th class="num" data-k="a">A</th>
+              <th class="num" data-k="xg">xG</th>
+              <th class="num" data-k="xg90">xG/90</th>
+              <th class="num" data-k="sh90">Sh/90</th>
+              <th class="num" data-k="sot90">SoT/90</th>
+              <th class="num" data-k="kp90">KP/90</th>
+              <th class="num" data-k="tk90">Tk/90</th>
+              <th class="num" data-k="rt">Rating</th>
+            </tr></thead>
             <tbody></tbody>
           </table>
         </div>
-        <div id="table-expansion-control" style="padding: 16px; background: #111823; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--card-border);"></div>
+        <div class="table-foot" id="ptfoot"></div>
       </div>
     </div>`;
 
-  let q="",pos="",team="",minMin=270;
-  let ax="sh90", ay="xg90";
-  let sortK="xg90", sortDir=-1, selCode=null;
-  const base = D.players.slice();
+  const posTag = p => p.pos ? p.pos.substring(0,2).toUpperCase() : "—";
 
-  const filtered = ()=> base.filter(p=>
-      (!pos||p.pos===pos)&&(!team||p.code===team)&&
-      (p.min||0)>=minMin &&
-      ((p.name||"").toLowerCase().includes(q)||(p.nat||"").toLowerCase().includes(q)));
+  /* ----- scatter: plot only the top N players by the Y-axis metric ----- */
+  const drawScatter = ()=>{
+    const rows = filtered();
+    const valid = rows.filter(p=>p[ax]!=null && p[ay]!=null);
+    // rank by the headline (Y) metric, then keep the requested number of leaders
+    const ranked = [...valid].sort((a,b)=>(b[ay]??-Infinity)-(a[ay]??-Infinity));
+    const shown = ranked.slice(0, topN);
 
-  const drawScatter = (rows)=>{
-    const pts = rows.filter(p=>p[ax]!=null && p[ay]!=null);
-    const topPerformers = [...pts].sort((m,n) => ((n[ay] * n[ax]) - (m[ay] * m[ax]))).slice(0, 8);
-    const visibleScatterSet = new Set(topPerformers.map(p => p.name));
-    const plottedPts = pts.slice(0, 85);
-
-    const W=840,H=440,pad={l:65,r:65,t:40,b:50};
-    const xs=plottedPts.map(p=>p[ax]), ys=plottedPts.map(p=>p[ay]);
-    const xmax=Math.max(0.0001,...xs) * 1.15; 
-    const ymax=Math.max(0.0001,...ys) * 1.15;
-    const xmin=Math.min(0,...xs);
-    const ymin=Math.min(0,...ys);
+    const W=860, H=460, pad={l:64,r:30,t:30,b:54};
+    const xs=shown.map(p=>p[ax]), ys=shown.map(p=>p[ay]);
+    const [xmin,xmax]=axisBounds(xs), [ymin,ymax]=axisBounds(ys);
     const sx=v=>pad.l+(v-xmin)/(xmax-xmin||1)*(W-pad.l-pad.r);
     const sy=v=>H-pad.b-(v-ymin)/(ymax-ymin||1)*(H-pad.t-pad.b);
-    
     const med=a=>{if(!a.length)return 0;const s=[...a].sort((m,n)=>m-n);return s[Math.floor(s.length/2)];};
     const mx=med(xs), my=med(ys);
-    const rad=p=>p.name===selCode ? 9 : 6;
-
     const ticks=(lo,hi,n=5)=>Array.from({length:n+1},(_,i)=>lo+(hi-lo)*i/n);
-    
-    let dotsHtml = "";
-    let labelsHtml = "";
 
-    plottedPts.forEach((p, i) => {
-      const sel = p.name===selCode;
-      const cxPos = sx(p[ax]);
-      const cyPos = sy(p[ay]);
-      const playerRadius = rad(p);
-      
-      dotsHtml += `<circle class="dot${sel?" sel":""}" data-i="${i}" cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}"
-        r="${playerRadius.toFixed(1)}" fill="${sel ? "var(--mag, #ff0055)" : "var(--lime, #ccff00)"}"
-        fill-opacity="${sel?1.0:0.65}" stroke="#0b0f17" stroke-width="${sel?2.5:1.2}" style="cursor:pointer; transition: r 0.2s;" />`;
-
-      if (sel || visibleScatterSet.has(p.name)) {
-        const isNearRight = cxPos > (W - 120);
-        const textX = isNearRight ? (cxPos - 9) : (cxPos + 9);
-        const anchor = isNearRight ? 'end' : 'start';
-        labelsHtml += `<text class="scatter-inline-label" x="${textX.toFixed(1)}" y="${(cyPos + 3).toFixed(1)}" text-anchor="${anchor}" font-size="10" font-family="sans-serif" font-weight="600" fill="${sel ? "#ff0055" : "#a1b0cb"}">${esc(shortName(p.name))}</text>`;
-      }
+    let dots="", labels="";
+    shown.forEach((p,i)=>{
+      const sel=p.name===selName, cx=sx(p[ax]), cy=sy(p[ay]), r=sel?9:6;
+      dots+=`<circle class="dot" data-i="${i}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}"
+        fill="${sel?"var(--mag)":"var(--lime)"}" fill-opacity="${sel?1:.85}"
+        stroke="#080a0d" stroke-width="${sel?2.5:1.2}"/>`;
+      const right=cx>W-150, tx=right?cx-10:cx+10, anc=right?"end":"start";
+      labels+=`<text class="lbl" x="${tx.toFixed(1)}" y="${(cy+3.5).toFixed(1)}" text-anchor="${anc}"
+        font-size="${sel?12:10.5}" fill="${sel?"var(--mag)":"#aebbd1"}">${esc(shortName(p.name))}</text>`;
     });
 
-    const xlabels=ticks(xmin,xmax).map(v=>`<text x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
-    const ylabels=ticks(ymin,ymax).map(v=>`<text x="${pad.l-10}" y="${sy(v)+4}" text-anchor="end" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
-    
-    $("#scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="scatter-svg" id="scsvg">
-      <rect width="${W}" height="${H}" fill="rgba(255,255,255,0.01)" rx="8" pointer-events="none" />
-      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
-      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
-      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.15)"/>
-      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.15)"/>
-      ${xlabels}${ylabels}
-      <text x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-8}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL[ax].toUpperCase())} →</text>
-      <text transform="rotate(-90 16 ${pad.t+(H-pad.t-pad.b)/2})" x="16" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL[ay].toUpperCase())} →</text>
-      ${dotsHtml}
-      ${labelsHtml}
-      <g id="tip" style="display:none"><rect rx="8" id="tipbg" fill="#172232" stroke="#2b394e" filter="drop-shadow(0px 4px 12px rgba(0,0,0,0.5))"/><text id="tiptx" font-size="12" fill="#fff"></text></g>
+    const xlab=ticks(xmin,xmax).map(v=>`<text class="tick" x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle">${+v.toFixed(2)}</text>`).join("");
+    const ylab=ticks(ymin,ymax).map(v=>`<text class="tick" x="${pad.l-9}" y="${sy(v)+4}" text-anchor="end">${+v.toFixed(2)}</text>`).join("");
+
+    $("#scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" id="scsvg">
+      <line class="guide" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}"/>
+      <line class="guide" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}"/>
+      <text class="quad" x="${W-pad.r-4}" y="${pad.t+12}" text-anchor="end">High ${esc(PMLABEL[ay])} · High ${esc(PMLABEL[ax])}</text>
+      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}"/>
+      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}"/>
+      ${xlab}${ylab}
+      <text class="axttl" x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-10}" text-anchor="middle">${esc(PMLABEL[ax])} →</text>
+      <text class="axttl" transform="rotate(-90 16 ${pad.t+(H-pad.t-pad.b)/2})" x="16" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle">${esc(PMLABEL[ay])} →</text>
+      ${dots}${labels}
+      <g id="tip" style="display:none"><rect rx="8" id="tipbg" fill="#16202e" stroke="#2b394e" filter="drop-shadow(0px 6px 14px rgba(0,0,0,.6))"/><text id="tiptx"></text></g>
     </svg>`;
-    
-    $("#scount").textContent = `Plotted Cluster Density: ${plottedPts.length} elite baseline targets matching scope profiles.`;
-    
+
+    const totalQ = valid.length;
+    $("#scount").textContent = `Showing the top ${shown.length} of ${totalQ} qualifying players, ranked by ${PMLABEL[ay]}.`;
+
     const svg=$("#scsvg"), tip=$("#tip",svg), tbg=$("#tipbg",svg), ttx=$("#tiptx",svg);
     svg.querySelectorAll(".dot").forEach(c=>{
       c.addEventListener("mousemove",()=>{
-        const p=plottedPts[+c.dataset.i];
-        ttx.innerHTML=`<tspan x="12" dy="4" style="font-weight:800; fill:var(--lime); font-size:13px">${esc(p.name)}</tspan>`+
-          `<tspan x="12" dy="18" fill="#8a99ad" font-size="11">${esc(p.team)} · ${esc(p.pos)}</tspan>`+
-          `<tspan x="12" dy="18" fill="#fff">${esc(PMLABEL[ay])}: ${fmtN(p[ay])}</tspan>`+
-          `<tspan x="12" dy="16" fill="#fff">${esc(PMLABEL[ax])}: ${fmtN(p[ax])}</tspan>`;
-        const bb=ttx.getBBox?ttx.getBBox():{width:160,height:75};
-        let tx=+c.getAttribute("cx")+16, ty=+c.getAttribute("cy")-20;
+        const p=shown[+c.dataset.i];
+        ttx.innerHTML=`<tspan x="12" dy="6" style="font-weight:800;fill:var(--lime);font-size:13px">${esc(p.name)}</tspan>`+
+          `<tspan x="12" dy="17" fill="#8c93a0" font-size="11">${esc(p.team)} · ${esc(p.pos)}</tspan>`+
+          `<tspan x="12" dy="18" fill="#fff" font-size="12">${esc(PMLABEL[ay])}: ${fmtN(p[ay])}</tspan>`+
+          `<tspan x="12" dy="16" fill="#fff" font-size="12">${esc(PMLABEL[ax])}: ${fmtN(p[ax])}</tspan>`;
+        const bb=ttx.getBBox?ttx.getBBox():{width:170,height:78};
+        let tx=+c.getAttribute("cx")+16, ty=+c.getAttribute("cy")-22;
         if(tx+bb.width+24>W) tx=+c.getAttribute("cx")-bb.width-24;
         if(ty<10) ty=12;
         tip.setAttribute("transform",`translate(${tx},${ty})`);
-        tbg.setAttribute("x",0); tbg.setAttribute("y",-10);
-        tbg.setAttribute("width",bb.width+24); tbg.setAttribute("height",bb.height+20);
+        tbg.setAttribute("x",0); tbg.setAttribute("y",-12);
+        tbg.setAttribute("width",bb.width+24); tbg.setAttribute("height",bb.height+22);
         tip.style.display="block";
       });
       c.addEventListener("mouseleave",()=>tip.style.display="none");
-      c.addEventListener("click",()=>{ const p=plottedPts[+c.dataset.i]; selCode=(selCode===p.name?null:p.name); refresh(); });
+      c.addEventListener("click",()=>{const p=shown[+c.dataset.i]; selName=(selName===p.name?null:p.name); refresh();});
     });
   };
 
-  const renderTable=(rows)=>{
+  /* ----- table ----- */
+  const renderTable=()=>{
+    const rows=filtered().sort((a,b)=>cmp(a[sortK],b[sortK])*sortDir);
+    const view=rows.slice(0,tableLimit);
     const tbody=$("#pt tbody");
-    const r2=[...rows].sort((a,b)=>cmp(a[sortK],b[sortK])*sortDir);
-    const visibleRows = r2.slice(0, playerLimit);
-    
-    tbody.innerHTML = visibleRows.map(p=> {
-      const isSelected = p.name === selCode;
-      const posShort = p.pos ? p.pos.substring(0,2).toUpperCase() : '–';
-      return `<tr class="${isSelected?"selrow":""}" data-n="${esc(p.name)}" style="cursor:pointer;">
-        <td class="name" style="font-weight:700;">${esc(p.name)}</td>
-        <td><span class="flgcell" style="display:flex; align-items:center; gap:6px;">${p.flag || ''}${esc(p.team)}</span></td>
-        <td><span class="pos-badge pos-${p.pos ? p.pos.substring(0,2).toUpperCase() : 'Other'}">${posShort}</span></td>
+
+    tbody.innerHTML = view.map(p=>{
+      const sel=p.name===selName, tag=posTag(p);
+      return `<tr class="${sel?"selrow":""}" data-n="${esc(p.name)}" style="cursor:pointer">
+        <td class="name" style="font-weight:700">${esc(p.name)}</td>
+        <td><span class="flgcell">${p.flag||""}${esc(p.team)}</span></td>
+        <td><span class="pos-badge pos-${tag}">${tag}</span></td>
         <td class="num">${fmtN(p.age,0)}</td>
-        <td class="num" style="color:#fff; font-weight:600;">${fmtN(p.min,0)}</td>
+        <td class="num" style="color:#fff;font-weight:600">${fmtN(p.min,0)}</td>
         <td class="num">${fmtN(p.gs,0)}</td>
         <td class="num">${fmtN(p.g,0)}</td>
         <td class="num">${fmtN(p.a,0)}</td>
         <td class="num">${fmtN(p.xg)}</td>
-        <td class="num hl" style="font-weight:700; color:var(--lime); background: rgba(204,255,0,0.02);">${fmtN(p.xg90)}</td>
-        <td class="num">${fmtN(p.sh90)}</td>
-        <td class="num">${fmtN(p.sot90)}</td>
-        <td class="num">${fmtN(p.kp90)}</td>
-        <td class="num">${fmtN(p.tk90)}</td>
-        <td class="num" style="font-weight:800; color:#fff;">${fmtN(p.rt)}</td></tr>`;
-    }).join("") || `<tr><td colspan="15" class="muted" style="text-align:center;padding:32px; background:#0e131f;">No active player index profiles match criteria configuration deck.</td></tr>`;
-    
-    const controlBox = $("#table-expansion-control");
-    if (r2.length > playerLimit) {
-      controlBox.innerHTML = `<button id="expandPlayersBtn" class="btn lime sm" style="margin:0; border-radius:8px;">Load Next 50 Roster Profiles (+50)</button> <span class="text-muted" style="font-size:13px; font-weight:600;">Showing ${playerLimit} of ${r2.length} Available Metrics Matrices</span>`;
-      $("#expandPlayersBtn").addEventListener("click", () => {
-        playerLimit += 50;
-        renderTable(rows);
-      });
+        <td class="num ${sortK==="xg90"?"colk":""}">${fmtN(p.xg90)}</td>
+        <td class="num ${sortK==="sh90"?"colk":""}">${fmtN(p.sh90)}</td>
+        <td class="num ${sortK==="sot90"?"colk":""}">${fmtN(p.sot90)}</td>
+        <td class="num ${sortK==="kp90"?"colk":""}">${fmtN(p.kp90)}</td>
+        <td class="num ${sortK==="tk90"?"colk":""}">${fmtN(p.tk90)}</td>
+        <td class="num" style="font-weight:800;color:#fff">${fmtN(p.rt)}</td></tr>`;
+    }).join("") || `<tr><td colspan="15" class="muted" style="text-align:center;padding:34px">No players match these filters — try lowering the minimum minutes.</td></tr>`;
+
+    const foot=$("#ptfoot");
+    if(!rows.length){ foot.innerHTML=""; }
+    else if(rows.length>tableLimit){
+      foot.innerHTML=`<span>Showing top <b>${tableLimit}</b> of <b>${rows.length}</b> players, sorted by <b>${PMLABEL[sortK]||sortK}</b>.</span>
+        <span><button class="btn sm" id="moreBtn">Show 25 more</button> <button class="btn lime sm" id="allBtn">Show all</button></span>`;
+      $("#moreBtn").addEventListener("click",()=>{tableLimit+=25;renderTable();});
+      $("#allBtn").addEventListener("click",()=>{tableLimit=rows.length;renderTable();});
     } else {
-      controlBox.innerHTML = r2.length ? `<span class="text-muted" style="font-size:13px; font-weight:600; width:100%; text-align:center;">Displaying total complete log of all ${r2.length} matching data profiles.</span>` : "";
+      foot.innerHTML=`<span>Showing all <b>${rows.length}</b> players, sorted by <b>${PMLABEL[sortK]||sortK}</b>.</span>
+        ${rows.length>25?`<button class="btn sm" id="lessBtn">Show fewer</button>`:""}`;
+      const lb=$("#lessBtn"); if(lb) lb.addEventListener("click",()=>{tableLimit=25;renderTable();});
     }
 
     tbody.querySelectorAll("tr[data-n]").forEach(tr=>tr.addEventListener("click",()=>{
-      selCode = selCode===tr.dataset.n?null:tr.dataset.n; refresh();
+      selName = selName===tr.dataset.n?null:tr.dataset.n; refresh();
     }));
-    document.querySelectorAll("#pt th").forEach(th=>th.classList.toggle("active-sort-th", th.dataset.k===sortK));
+    document.querySelectorAll("#pt th[data-k]").forEach(th=>th.classList.toggle("sortk", th.dataset.k===sortK));
   };
 
   const refresh=()=>{
-    const rows=filtered();
-    drawScatter(rows); 
-    renderTable(rows);
-    
-    $("#hud-y-label").textContent = PMLABEL[ay];
-    $("#hud-x-label").textContent = PMLABEL[ax];
-    $("#selinfo").innerHTML = selCode?`Active Matrix Highlight Filter locked on: <b style="color:var(--mag); font-weight:800;">${esc(selCode)}</b>`: "No target locked on matrix row. Select node to cross-reference.";
+    drawScatter();
+    renderTable();
+    $("#chart-title").textContent = `${PMLABEL[ay]} vs ${PMLABEL[ax]}`;
+    $("#ptotal").textContent = `${filtered().length} players shown`;
+    $("#selinfo").innerHTML = selName
+      ? `Highlighting <b>${esc(selName)}</b> in the chart and table — click again to clear.`
+      : "";
   };
 
-  $("#psearch").addEventListener("input",e=>{q=e.target.value.toLowerCase();refresh()});
-  $("#ppos").addEventListener("change",e=>{pos=e.target.value;refresh()});
-  $("#pteam").addEventListener("change",e=>{team=e.target.value;refresh()});
-  $("#pmin").addEventListener("input",e=>{minMin=+e.target.value;$("#mmval").textContent=minMin;refresh()});
-  $("#ax").addEventListener("change",e=>{ax=e.target.value;refresh()});
-  $("#ay").addEventListener("change",e=>{ay=e.target.value;refresh()});
+  $("#psearch").addEventListener("input",e=>{q=e.target.value.toLowerCase();tableLimit=25;refresh();});
+  $("#ppos").addEventListener("change",e=>{pos=e.target.value;tableLimit=25;refresh();});
+  $("#pteam").addEventListener("change",e=>{team=e.target.value;tableLimit=25;refresh();});
+  $("#pmin").addEventListener("input",e=>{minMin=+e.target.value;$("#mmval").textContent=minMin;refresh();});
+  $("#ay").addEventListener("change",e=>{ay=e.target.value;refresh();});
+  $("#ax").addEventListener("change",e=>{ax=e.target.value;refresh();});
+  $("#atop").addEventListener("change",e=>{topN=+e.target.value;drawScatter();$("#scount")&&null;});
   document.querySelectorAll("#pt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
-    const k=th.dataset.k; if(sortK===k)sortDir*=-1;else{sortK=k;sortDir=th.dataset.t==="s"?1:-1;}refresh();
+    const k=th.dataset.k; if(sortK===k)sortDir*=-1; else {sortK=k;sortDir=th.dataset.t==="s"?1:-1;} renderTable();
+    document.querySelectorAll("#pt th[data-k]").forEach(t=>t.classList.toggle("sortk",t.dataset.k===sortK));
   }));
+
   refresh();
 }
 
 /* ---------- TEAM STATS ---------- */
 function stats(){
   injectGlobalDashboardStyles();
-  
+
   const cs = D.country_stats.slice();
   const metrics = [
     ["goals_scored","Goals scored",-1],["goals_conceded","Goals conceded",1],
@@ -762,236 +671,206 @@ function stats(){
     ["average_possession","Possession %",-1],["win_percentage","Win %",-1],
     ["cards_total","Cards",1],
   ];
-  
+  const dirMap   = Object.fromEntries(metrics.map(([k,,d])=>[k,d]));
+  const labelMap = Object.fromEntries(metrics.map(([k,l])=>[k,l]));
+
   let sortK="goals_scored", dir=-1;
   let ax="xg_for_avg_overall", ay="goals_scored";
-  let selTeamCode=null;
+  let selCode=null;
 
   app.innerHTML = `
     <div class="dashboard-wrapper">
-      <div>
-        <div class="kicker">Tournament Matrix Analytics Hub</div>
-        <div class="sec-h"><h1>Team Data Leaderboards</h1></div>
-      </div>
-      
-      <div class="premium-hud" style="border-left-color: var(--lime);">
-        <div class="hud-title" style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between; flex-wrap:wrap;">
-          <span>Rank Structural Standings Dataset By Core Condition Parameter:</span>
-          <select id="metric" style="background:#1c2635; border:1px solid var(--card-border); color:var(--lime); padding:8px 16px; border-radius:8px; font-weight:700; outline:none; cursor:pointer;">
-            ${metrics.map(([k,l])=>`<option value="${k}" ${k===sortK?"selected":""}>${l}</option>`).join("")}
-          </select>
+      <div class="dash-lead">
+        <div class="lead-copy">
+          <div class="kicker">Team Statistics</div>
+          <div class="sec-h"><h1>Team Stats</h1><span class="pill">${cs.length} teams</span></div>
+          <p>Tournament performance for every nation. Choose a metric to rank by — the podium, chart and table all update together. Every team appears on the chart; click any team to highlight it, or tap a name to open its page.</p>
+        </div>
+        <div class="ctrl" style="min-width:220px">
+          <label>Rank teams by</label>
+          <select id="metric">${metrics.map(([k,l])=>`<option value="${k}"${k===sortK?" selected":""}>${l}</option>`).join("")}</select>
         </div>
       </div>
 
-      <div id="podium-highlights-container" class="championship-podium-deck"></div>
+      <div class="podium-deck" id="podium"></div>
 
-      <div class="scatter-container-card">
-        <div class="scatter-axis-selectors">
-          <div class="axis-pill-selector">
-            <span>Vertical Axis (Y):</span>
-            <select id="tay">${metrics.map(([k,l])=>`<option value="${k}"${k===ay?" selected":""}>${l}</option>`).join("")}</select>
-          </div>
-          <div class="axis-pill-selector">
-            <span>Horizontal Axis (X):</span>
-            <select id="tax">${metrics.map(([k,l])=>`<option value="${k}"${k===ax?" selected":""}>${l}</option>`).join("")}</select>
+      <div class="chart-card">
+        <div class="chart-head">
+          <h3 id="t-chart-title"></h3>
+          <div class="axis-picks">
+            <div class="axis-pick y"><span class="ax-tag">Y ↑</span>
+              <select id="tay">${metrics.map(([k,l])=>`<option value="${k}"${k===ay?" selected":""}>${l}</option>`).join("")}</select></div>
+            <div class="axis-pick"><span class="ax-tag">X →</span>
+              <select id="tax">${metrics.map(([k,l])=>`<option value="${k}"${k===ax?" selected":""}>${l}</option>`).join("")}</select></div>
           </div>
         </div>
-        <div class="scatter-view-wrapper">
-          <div id="team-scatter"></div>
-        </div>
-        <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 12px;" class="text-muted">
-          <span id="tscount"></span>
-          <span>💡 Hover points for team breakdown card · Click to lock highlight row</span>
+        <div class="chart-stage"><div id="team-scatter"></div></div>
+        <div class="chart-foot">
+          <span class="legend">
+            <span><i style="background:var(--lime)"></i>Team</span>
+            <span><i style="background:var(--mag)"></i>Selected</span>
+            <span id="tscount"></span>
+          </span>
+          <span class="hint">Labels are 3-letter team codes · dashed lines mark the median · hover for full detail</span>
         </div>
       </div>
 
-      <div class="table-container-card">
+      <div class="card" style="overflow:hidden;padding:0">
         <div class="tbl-wrap">
-          <table class="dt adv ranking-table-v2" id="tt">
-            <thead>
-              <tr>
-                <th class="num" style="width: 60px;">Rank</th>
-                <th data-k="name" data-t="s">Team Representation</th>
-                <th class="num" data-k="matches_played">P</th>
-                <th class="num" data-k="wins">W</th>
-                <th class="num" data-k="draws">D</th>
-                <th class="num" data-k="losses">L</th>
-                <th class="num" data-k="goals_scored">GF</th>
-                <th class="num" data-k="goals_conceded">GA</th>
-                <th class="num" data-k="goal_difference">GD</th>
-                <th class="num" data-k="points_per_game">PPG</th>
-                <th class="num" data-k="xg_for_avg_overall">xG/m</th>
-                <th class="num" data-k="clean_sheets">CS</th>
-                <th class="num" data-k="average_possession">Poss %</th>
-              </tr>
-            </thead>
+          <table class="dt adv" id="tt">
+            <thead><tr>
+              <th class="num" style="width:54px">#</th>
+              <th data-k="name" data-t="s">Team</th>
+              <th class="num" data-k="matches_played">P</th>
+              <th class="num" data-k="wins">W</th>
+              <th class="num" data-k="draws">D</th>
+              <th class="num" data-k="losses">L</th>
+              <th class="num" data-k="goals_scored">GF</th>
+              <th class="num" data-k="goals_conceded">GA</th>
+              <th class="num" data-k="goal_difference">GD</th>
+              <th class="num" data-k="points_per_game">PPG</th>
+              <th class="num" data-k="xg_for_avg_overall">xG/m</th>
+              <th class="num" data-k="clean_sheets">CS</th>
+              <th class="num" data-k="average_possession">Poss%</th>
+            </tr></thead>
             <tbody></tbody>
           </table>
         </div>
+        <div class="table-foot"><span id="ttnote"></span><span class="hint">Click a column header to sort · the highlighted column is the active ranking metric</span></div>
       </div>
     </div>`;
-      
-  const dirMap=Object.fromEntries(metrics.map(([k,,d])=>[k,d]));
+
   const tbody=$("#tt tbody");
-  
-  const drawTeamScatter = (rows) => {
-    const pts = rows.filter(r => r[ax] != null && r[ay] != null);
-    const W = 840, H = 440, pad = { l: 65, r: 65, t: 40, b: 50 };
-    const xs = pts.map(r => parseFloat(r[ax]) || 0), ys = pts.map(r => parseFloat(r[ay]) || 0);
-    
-    const xmax = Math.max(0.0001, ...xs) * 1.15; 
-    const ymax = Math.max(0.0001, ...ys) * 1.15;
-    const xmin = Math.min(0, ...xs);
-    const ymin = Math.min(0, ...ys);
-    
-    const sx = v => pad.l + (v - xmin) / (xmax - xmin || 1) * (W - pad.l - pad.r);
-    const sy = v => H - pad.b - (v - ymin) / (ymax - ymin || 1) * (H - pad.t - pad.b);
 
-    const med = a => { if (!a.length) return 0; const s = [...a].sort((m, n) => m - n); return s[Math.floor(s.length / 2)]; };
-    const mx = med(xs), my = med(ys);
-    const rad = r => r.code === selTeamCode ? 9 : 6;
-    const ticks = (lo, hi, n = 5) => Array.from({ length: n + 1 }, (_, i) => lo + (hi - lo) * i / n);
+  /* ----- scatter: every team plotted, labelled by code ----- */
+  const drawTeamScatter = (rows)=>{
+    const pts = rows.filter(r=>r[ax]!=null && r[ay]!=null);
+    const W=860, H=470, pad={l:64,r:34,t:30,b:54};
+    const xs=pts.map(r=>parseFloat(r[ax])||0), ys=pts.map(r=>parseFloat(r[ay])||0);
+    const [xmin,xmax]=axisBounds(xs), [ymin,ymax]=axisBounds(ys);
+    const sx=v=>pad.l+(v-xmin)/(xmax-xmin||1)*(W-pad.l-pad.r);
+    const sy=v=>H-pad.b-(v-ymin)/(ymax-ymin||1)*(H-pad.t-pad.b);
+    const med=a=>{if(!a.length)return 0;const s=[...a].sort((m,n)=>m-n);return s[Math.floor(s.length/2)];};
+    const mx=med(xs), my=med(ys);
+    const ticks=(lo,hi,n=5)=>Array.from({length:n+1},(_,i)=>lo+(hi-lo)*i/n);
 
-    let dotsHtml = "";
-    let labelsHtml = "";
-    const PMLABEL_TEAM = Object.fromEntries(metrics.map(([k, l]) => [k, l]));
-
-    pts.forEach((r, i) => {
-      const sel = r.code === selTeamCode;
-      const cxPos = sx(parseFloat(r[ax]) || 0);
-      const cyPos = sy(parseFloat(r[ay]) || 0);
-      const teamRadius = rad(r);
-
-      dotsHtml += `<circle class="dot${sel ? " sel" : ""}" data-i="${i}" cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}"
-        r="${teamRadius.toFixed(1)}" fill="${sel ? "var(--mag, #ff0055)" : "var(--lime, #ccff00)"}"
-        fill-opacity="${sel ? 1.0 : 0.65}" stroke="#0b0f17" stroke-width="${sel ? 2.5 : 1.2}" style="cursor:pointer; transition: r 0.2s;" />`;
-
-      const isNearRight = cxPos > (W - 120);
-      const textX = isNearRight ? (cxPos - 9) : (cxPos + 9);
-      const anchor = isNearRight ? 'end' : 'start';
-
-      labelsHtml += `<text class="scatter-inline-label" x="${textX.toFixed(1)}" y="${(cyPos + 3).toFixed(1)}" text-anchor="${anchor}" font-size="10" font-family="sans-serif" font-weight="600" fill="${sel ? "#ff0055" : "#a1b0cb"}">${esc(r.name)}</text>`;
+    let dots="", labels="";
+    pts.forEach((r,i)=>{
+      const sel=r.code===selCode, cx=sx(parseFloat(r[ax])||0), cy=sy(parseFloat(r[ay])||0), rad=sel?9:5.5;
+      dots+=`<circle class="dot" data-i="${i}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rad}"
+        fill="${sel?"var(--mag)":"var(--lime)"}" fill-opacity="${sel?1:.8}"
+        stroke="#080a0d" stroke-width="${sel?2.5:1.1}"/>`;
+      const right=cx>W-70, tx=right?cx-8:cx+8, anc=right?"end":"start";
+      labels+=`<text class="code" x="${tx.toFixed(1)}" y="${(cy+3).toFixed(1)}" text-anchor="${anc}"
+        font-size="${sel?12:9.5}" fill="${sel?"var(--mag)":"#9aa7bd"}" fill-opacity="${sel?1:.85}">${esc(r.code)}</text>`;
     });
 
-    const xlabels = ticks(xmin, xmax).map(v => `<text x="${sx(v)}" y="${H - pad.b + 18}" text-anchor="middle" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
-    const ylabels = ticks(ymin, ymax).map(v => `<text x="${pad.l - 10}" y="${sy(v) + 4}" text-anchor="end" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
+    const xlab=ticks(xmin,xmax).map(v=>`<text class="tick" x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle">${+v.toFixed(2)}</text>`).join("");
+    const ylab=ticks(ymin,ymax).map(v=>`<text class="tick" x="${pad.l-9}" y="${sy(v)+4}" text-anchor="end">${+v.toFixed(2)}</text>`).join("");
 
-    $("#team-scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="scatter-svg" id="ts_svg">
-      <rect width="${W}" height="${H}" fill="rgba(255,255,255,0.01)" rx="8" pointer-events="none" />
-      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W - pad.r}" y2="${sy(my)}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
-      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H - pad.b}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
-      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H - pad.b}" stroke="rgba(255,255,255,0.15)"/>
-      <line class="axis" x1="${pad.l}" y1="${H - pad.b}" x2="${W - pad.r}" y2="${H - pad.b}" stroke="rgba(255,255,255,0.15)"/>
-      ${xlabels}${ylabels}
-      <text x="${pad.l + (W - pad.l - pad.r) / 2}" y="${H - 8}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL_TEAM[ax].toUpperCase())} →</text>
-      <text transform="rotate(-90 16 ${pad.t + (H - pad.t - pad.b) / 2})" x="16" y="${pad.t + (H - pad.t - pad.b) / 2}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL_TEAM[ay].toUpperCase())} →</text>
-      ${dotsHtml}
-      ${labelsHtml}
-      <g id="ttip" style="display:none"><rect rx="8" id="ttipbg" fill="#172232" stroke="#2b394e" filter="drop-shadow(0px 4px 12px rgba(0,0,0,0.5))"/><text id="ttiptx" font-size="12" fill="#fff"></text></g>
+    $("#team-scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" id="ts_svg">
+      <line class="guide" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}"/>
+      <line class="guide" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}"/>
+      <text class="quad" x="${W-pad.r-4}" y="${pad.t+12}" text-anchor="end">High ${esc(labelMap[ay])} · High ${esc(labelMap[ax])}</text>
+      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}"/>
+      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}"/>
+      ${xlab}${ylab}
+      <text class="axttl" x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-10}" text-anchor="middle">${esc(labelMap[ax])} →</text>
+      <text class="axttl" transform="rotate(-90 16 ${pad.t+(H-pad.t-pad.b)/2})" x="16" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle">${esc(labelMap[ay])} →</text>
+      ${dots}${labels}
+      <g id="ttip" style="display:none"><rect rx="8" id="ttipbg" fill="#16202e" stroke="#2b394e" filter="drop-shadow(0px 6px 14px rgba(0,0,0,.6))"/><text id="ttiptx"></text></g>
     </svg>`;
 
-    $("#tscount").textContent = `Plotted Cluster Density: ${pts.length} nations active in matrix dataset.`;
+    $("#tscount").textContent = `All ${pts.length} teams plotted.`;
 
-    const svg = $("#ts_svg"), tip = $("#ttip", svg), tbg = $("#ttipbg", svg), ttx = $("#ttiptx", svg);
-    svg.querySelectorAll(".dot").forEach(c => {
-      c.addEventListener("mousemove", () => {
-        const r = pts[+c.dataset.i];
-        ttx.innerHTML = `<tspan x="12" dy="4" style="font-weight:800; fill:var(--lime); font-size:13px">${esc(r.name)}</tspan>` +
-          `<tspan x="12" dy="18" fill="#8a99ad" font-size="11">Group ${esc(r.group)}</tspan>` +
-          `<tspan x="12" dy="18" fill="#fff">${esc(PMLABEL_TEAM[ay])}: ${fmt(r[ay])}</tspan>` +
-          `<tspan x="12" dy="16" fill="#fff">${esc(PMLABEL_TEAM[ax])}: ${fmt(r[ax])}</tspan>`;
-        const bb = ttx.getBBox ? ttx.getBBox() : { width: 160, height: 75 };
-        let tx = +c.getAttribute("cx") + 16, ty = +c.getAttribute("cy") - 20;
-        if (tx + bb.width + 24 > W) tx = +c.getAttribute("cx") - bb.width - 24;
-        if (ty < 10) ty = 12;
-        tip.setAttribute("transform", `translate(${tx},${ty})`);
-        tbg.setAttribute("x", 0); tbg.setAttribute("y", -10);
-        tbg.setAttribute("width", bb.width + 24); tbg.setAttribute("height", bb.height + 20);
-        tip.style.display = "block";
+    const svg=$("#ts_svg"), tip=$("#ttip",svg), tbg=$("#ttipbg",svg), ttx=$("#ttiptx",svg);
+    svg.querySelectorAll(".dot").forEach(c=>{
+      c.addEventListener("mousemove",()=>{
+        const r=pts[+c.dataset.i];
+        ttx.innerHTML=`<tspan x="12" dy="6" style="font-weight:800;fill:var(--lime);font-size:13px">${esc(r.name)}</tspan>`+
+          `<tspan x="12" dy="17" fill="#8c93a0" font-size="11">Group ${esc(r.group)} · ${fmt(r.wins)}W ${fmt(r.draws)}D ${fmt(r.losses)}L</tspan>`+
+          `<tspan x="12" dy="18" fill="#fff" font-size="12">${esc(labelMap[ay])}: ${fmt(r[ay])}</tspan>`+
+          `<tspan x="12" dy="16" fill="#fff" font-size="12">${esc(labelMap[ax])}: ${fmt(r[ax])}</tspan>`;
+        const bb=ttx.getBBox?ttx.getBBox():{width:180,height:78};
+        let tx=+c.getAttribute("cx")+16, ty=+c.getAttribute("cy")-22;
+        if(tx+bb.width+24>W) tx=+c.getAttribute("cx")-bb.width-24;
+        if(ty<10) ty=12;
+        tip.setAttribute("transform",`translate(${tx},${ty})`);
+        tbg.setAttribute("x",0); tbg.setAttribute("y",-12);
+        tbg.setAttribute("width",bb.width+24); tbg.setAttribute("height",bb.height+22);
+        tip.style.display="block";
       });
-      c.addEventListener("mouseleave", () => tip.style.display = "none");
-      c.addEventListener("click", () => { const r = pts[+c.dataset.i]; selTeamCode = (selTeamCode === r.code ? null : r.code); draw(); });
+      c.addEventListener("mouseleave",()=>tip.style.display="none");
+      c.addEventListener("click",()=>{const r=pts[+c.dataset.i]; selCode=(selCode===r.code?null:r.code); draw();});
     });
   };
 
   const draw=()=>{
-    let rows=[...cs];
-    rows.sort((a,b)=>cmp(a[sortK],b[sortK])*dir);
-    
-    const allVals = rows.map(r => Math.abs(parseFloat(r[sortK]) || 0));
-    const maxMetricVal = Math.max(0.001, ...allVals);
+    const rows=[...cs].sort((a,b)=>cmp(a[sortK],b[sortK])*dir);
+    const higherBetter = dirMap[sortK]===-1;
+    const label = labelMap[sortK];
 
-    const activeLabel = metrics.find(m => m[0] === sortK)[1];
-    const top3 = rows.slice(0, 3);
-    let podiumHtml = "";
-    
-    const crowns = ["🥇", "🥈", "🥉"];
-    top3.forEach((team, idx) => {
-      podiumHtml += `
-        <div class="podium-showcase-card rank-${idx + 1}">
-          <div class="podium-crown">${crowns[idx]}</div>
-          <div class="podium-nation-title">
-            <span>${team.flag || ''}</span>
-            <span>${esc(team.name)}</span>
-          </div>
-          <div class="podium-metric-display">
-            <span class="big-value">${fmt(team[sortK])}</span>
-            <span class="sub-label">${activeLabel}</span>
-          </div>
-        </div>
-      `;
-    });
-    $("#podium-highlights-container").innerHTML = podiumHtml;
+    // podium — the three best teams for the chosen metric
+    const medals=["🥇","🥈","🥉"], cls=["p1","p2","p3"];
+    $("#podium").innerHTML = rows.slice(0,3).map((t,i)=>`
+      <div class="podium-card ${cls[i]}" data-code="${t.code}" style="cursor:pointer">
+        <div class="medal">${medals[i]}</div>
+        <div class="pflag">${t.flag||""}</div>
+        <div class="pname">${esc(t.name)}</div>
+        <div class="pgroup">Group ${esc(t.group)}</div>
+        <span class="pval">${fmt(t[sortK])}${sortK==="average_possession"||sortK==="win_percentage"?"%":""}</span>
+        <span class="plabel">${esc(label)} ${higherBetter?"(higher is better)":"(lower is better)"}</span>
+        <div class="prec">P${fmt(t.matches_played)} · <b>${fmt(t.wins)}W</b> ${fmt(t.draws)}D ${fmt(t.losses)}L</div>
+      </div>`).join("");
+    $("#podium").querySelectorAll(".podium-card").forEach(el=>el.addEventListener("click",()=>{
+      selCode = selCode===el.dataset.code?null:el.dataset.code; draw();
+    }));
 
     drawTeamScatter(rows);
 
-    tbody.innerHTML=rows.map((r,i)=>{
-      const rawVal = parseFloat(r[sortK]) || 0;
-      const barPercentage = Math.min(100, Math.max(3, (Math.abs(rawVal) / maxMetricVal) * 100));
-      
-      const renderBar = `
-        <div class="perf-bar-track">
-          <div class="perf-bar-fill" style="width: ${barPercentage}%;"></div>
-        </div>
-      `;
+    // magnitude bar for the active metric (lime = higher-better, pink = lower-better)
+    const maxAbs=Math.max(0.001,...rows.map(r=>Math.abs(parseFloat(r[sortK])||0)));
+    const barColor = higherBetter ? "linear-gradient(90deg,var(--lime),#9fd400)" : "linear-gradient(90deg,#ff2d87,#b51e60)";
 
-      return `<tr class="${r.code===selTeamCode?"selrow":""}" data-code="${r.code}" style="cursor:pointer;">
-        <td class="rk num" style="font-weight: 800; color: var(--lime); font-size:15px; text-align:center;">${i+1}</td>
-        <td class="name">
-          <a class="flgcell" href="#/country/${r.code}" style="font-weight:700; color:#fff; text-decoration:none; display:block;">${r.flag || ''} ${esc(r.name)}</a>
-          ${renderBar}
-        </td>
-        <td class="num" style="font-weight:600;">${fmt(r.matches_played)}</td>
+    tbody.innerHTML=rows.map((r,i)=>{
+      const pct=Math.min(100,Math.max(3,(Math.abs(parseFloat(r[sortK])||0)/maxAbs)*100));
+      const k=c=>sortK===c?"colk":"";
+      return `<tr class="${r.code===selCode?"selrow":""}" data-code="${r.code}" style="cursor:pointer">
+        <td class="num"><span class="rankcell ${i<3?"top":""}">${i+1}</span></td>
+        <td class="name"><div class="teamcell">
+          <a href="#/country/${r.code}">${r.flag||""} ${esc(r.name)}</a>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        </div></td>
+        <td class="num">${fmt(r.matches_played)}</td>
         <td class="num">${fmt(r.wins)}</td>
         <td class="num">${fmt(r.draws)}</td>
         <td class="num">${fmt(r.losses)}</td>
-        <td class="num ${sortK==='goals_scored'?'active-sort-cell':''}">${fmt(r.goals_scored)}</td>
-        <td class="num ${sortK==='goals_conceded'?'active-sort-cell':''}">${fmt(r.goals_conceded)}</td>
-        <td class="num ${sortK==='goal_difference'?'active-sort-cell':''}">${fmt(r.goal_difference)}</td>
-        <td class="num ${sortK==='points_per_game'?'active-sort-cell':''}" style="font-weight:700;">${fmt(r.points_per_game)}</td>
-        <td class="num ${sortK==='xg_for_avg_overall'?'active-sort-cell':''}">${fmt(r.xg_for_avg_overall)}</td>
-        <td class="num ${sortK==='clean_sheets'?'active-sort-cell':''}">${fmt(r.clean_sheets)}</td>
-        <td class="num ${sortK==='average_possession'?'active-sort-cell':''}">${fmt(r.average_possession)}%</td></tr>`;
+        <td class="num ${k("goals_scored")}">${fmt(r.goals_scored)}</td>
+        <td class="num ${k("goals_conceded")}">${fmt(r.goals_conceded)}</td>
+        <td class="num ${k("goal_difference")}">${fmt(r.goal_difference)}</td>
+        <td class="num ${k("points_per_game")}" style="font-weight:700">${fmt(r.points_per_game)}</td>
+        <td class="num ${k("xg_for_avg_overall")}">${fmt(r.xg_for_avg_overall)}</td>
+        <td class="num ${k("clean_sheets")}">${fmt(r.clean_sheets)}</td>
+        <td class="num ${k("average_possession")}">${fmt(r.average_possession)}%</td></tr>`;
     }).join("");
-    
-    tbody.querySelectorAll("tr[data-code]").forEach(tr=>{
-      tr.addEventListener("click",()=>{
-        selTeamCode = selTeamCode===tr.dataset.code?null:tr.dataset.code;
-        draw();
-      });
-    });
 
-    document.querySelectorAll("#tt th[data-k]").forEach(th => {
-      th.classList.toggle("active-sort-th", th.dataset.k === sortK);
-    });
+    tbody.querySelectorAll("tr[data-code]").forEach(tr=>tr.addEventListener("click",e=>{
+      if(e.target.closest("a")) return; // let links through to the country page
+      selCode = selCode===tr.dataset.code?null:tr.dataset.code; draw();
+    }));
+
+    document.querySelectorAll("#tt th[data-k]").forEach(th=>th.classList.toggle("sortk",th.dataset.k===sortK));
+    $("#t-chart-title").textContent = `${labelMap[ay]} vs ${labelMap[ax]}`;
+    $("#ttnote").innerHTML = `Ranked by <b>${esc(label)}</b> ${higherBetter?"(higher is better)":"(lower is better)"}.${selCode?` Highlighting <b>${esc(byCode(selCode)?.name||selCode)}</b>.`:""}`;
   };
 
-  $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1; draw();});
-  $("#tax").addEventListener("change",e=>{ax=e.target.value; draw();});
-  $("#tay").addEventListener("change",e=>{ay=e.target.value; draw();});
-  
+  $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1;draw();});
+  $("#tax").addEventListener("change",e=>{ax=e.target.value;draw();});
+  $("#tay").addEventListener("change",e=>{ay=e.target.value;draw();});
   document.querySelectorAll("#tt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
-    const k=th.dataset.k; if(sortK===k)dir*=-1; else {sortK=k;dir=th.dataset.t==="s"?1:-1;}draw()}));
+    const k=th.dataset.k; if(sortK===k)dir*=-1; else {sortK=k;dir=th.dataset.t==="s"?1:(dirMap[k]||-1);} draw();
+  }));
+
   draw();
 }
 
