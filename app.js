@@ -3,15 +3,12 @@
    ============================================================ */
 const D = window.WC_DATA;
 const app = document.getElementById("app");
-const CONF = ["UEFA","CONMEBOL","CONCACAF","CAF","AFC","OFC"];
 const $ = (s, r=document) => r.querySelector(s);
 
 const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = v => v==null||v===""?"–":v;
 const teamsArr = () => Object.values(D.teams);
 const byCode = c => D.teams[c];
-const confColor = c => `var(--conf-${c})`;
-const confTag = c => `<span class="tag-conf" style="background:${confColor(c)};color:#0a0b0d">${c}</span>`;
 const groupOf = code => byCode(code)?.group;
 
 /* ---------- router ---------- */
@@ -87,7 +84,6 @@ function teamRow(code){
       ${t.host?'<span class="badge-h">Host</span>':""}
       ${t.debut?'<span class="badge-d">Debut</span>':""}
     </span>
-    <span class="tag-conf" style="background:${confColor(t.conf)};color:#0a0b0d">${t.conf}</span>
   </a>`;
 }
 function groups(){
@@ -112,15 +108,12 @@ function countries(){
     <div class="sec-h"><h1>Countries</h1></div>
     <div class="filters">
       <input id="csearch" placeholder="Search a nation…">
-      <button class="chip on" data-c="ALL">All</button>
-      ${CONF.map(c=>`<button class="chip" data-c="${c}">${c}</button>`).join("")}
     </div>
     <div class="grid-c" id="cgrid"></div>`;
-  let conf="ALL", q="";
+  let q="";
   const grid = $("#cgrid");
   const draw = ()=>{
     const list = teamsArr().filter(t=>
-      (conf==="ALL"||t.conf===conf) &&
       t.name.toLowerCase().includes(q.toLowerCase())
     ).sort((a,b)=>a.name.localeCompare(b.name));
     grid.innerHTML = list.length? list.map(t=>`
@@ -128,15 +121,10 @@ function countries(){
         <span class="gtag">${t.group}</span>
         <div class="fl">${t.flag}</div>
         <div class="cn">${esc(t.name)}</div>
-        <div class="cm"><span class="conf-dot" style="background:${confColor(t.conf)}"></span>${t.conf}
-          ${t.host?" · Host":""}${t.debut?" · Debut":""}</div>
+        <div class="cm">${t.host?"Host":""}${t.host&&t.debut?" · ":""}${t.debut?"Debut":""}</div>
       </a>`).join("") : `<div class="empty">No nations match.</div>`;
   };
   $("#csearch").addEventListener("input",e=>{q=e.target.value;draw()});
-  document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
-    document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
-    b.classList.add("on"); conf=b.dataset.c; draw();
-  }));
   draw();
 }
 
@@ -165,7 +153,7 @@ function country(rest){
     qual = `<div class="card panel">
       <h3>Qualification Stats</h3>
       ${recHtml}
-      <p class="muted" style="font-size:13px;margin:0 0 14px">${s.matches_played||0} qualifiers played · ${t.conf} campaign.</p>
+      <p class="muted" style="font-size:13px;margin:0 0 14px">${s.matches_played||0} qualifiers played.</p>
       <div class="statgrid">
         ${statBlock("Played",s.matches_played)}
         ${statBlock("Points/Game",s.points_per_game)}
@@ -193,8 +181,7 @@ function country(rest){
     ${groupCodes.map(c=>{const o=byCode(c);const me=c===code;
       return `<a class="trow" href="#/country/${c}" style="${me?'background:var(--ink3)':''}">
         <span class="fl">${o.flag}</span>
-        <span class="nm">${esc(o.name)}${me?' <small>(this team)</small>':''}</span>
-        <span class="tag-conf" style="background:${confColor(o.conf)};color:#0a0b0d">${o.conf}</span></a>`;
+        <span class="nm">${esc(o.name)}${me?' <small>(this team)</small>':''}</span></a>`;
     }).join("")}</div>`;
 
   // lineup
@@ -240,7 +227,6 @@ function country(rest){
       <div>
         <h1>${esc(t.name)}</h1>
         <div class="sub">
-          ${confTag(t.conf)}
           <span class="pill">Group ${t.group}</span>
           ${t.host?'<span class="pill" style="border-color:var(--lime);color:var(--lime)">Host nation</span>':""}
           ${t.debut?'<span class="pill" style="border-color:var(--mag);color:var(--mag)">World Cup debut</span>':""}
@@ -299,7 +285,7 @@ const fmtN = (v,d=2)=> v==null?"–":(typeof v==="number"? (Number.isInteger(v)?
 
 function players(){
   app.innerHTML = `
-    <div class="kicker">Qualifying analytics · all six confederations</div>
+    <div class="kicker">Qualifying analytics</div>
     <div class="sec-h"><h1>Player Stats</h1><span class="pill">${D.players.length} players</span></div>
     <p class="muted note">Per-90 metrics from World Cup qualifying. Plot any two metrics to scout players, then dig into the table. Hosts (USA, Canada, Mexico) have no qualifiers so aren't included; some smaller federations report limited shot/market data.</p>
 
@@ -307,7 +293,6 @@ function players(){
       <input id="psearch" placeholder="Search player or nationality…">
       <select id="ppos"><option value="">All positions</option>
         <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select>
-      <select id="pconf"><option value="">All confederations</option>${CONF.map(c=>`<option>${c}</option>`).join("")}</select>
       <select id="pteam"><option value="">All teams</option>
         ${teamsArr().filter(t=>t.squad.length).sort((a,b)=>a.name.localeCompare(b.name))
           .map(t=>`<option value="${t.code}">${esc(t.name)}</option>`).join("")}</select>
@@ -319,7 +304,6 @@ function players(){
       <div class="scatter-axes">
         <span>Y<select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="xg90"?" selected":""}>${l}</option>`).join("")}</select></span>
         <span>X<select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="sh90"?" selected":""}>${l}</option>`).join("")}</select></span>
-        <span class="legend" id="plegend"></span>
       </div>
       <div id="scatter" class="scatter-wrap"></div>
       <div class="scatter-foot"><span id="scount" class="muted"></span><span id="selinfo" class="selinfo"></span></div>
@@ -337,18 +321,15 @@ function players(){
         <th data-k="rt" class="num">Rating</th></tr></thead>
       <tbody></tbody></table></div>`;
 
-  let q="",pos="",team="",conf="",minMin=270;
+  let q="",pos="",team="",minMin=270;
   let ax="sh90", ay="xg90";
   let sortK="xg90", sortDir=-1, selCode=null;
   const base = D.players.slice();
 
   const filtered = ()=> base.filter(p=>
-      (!pos||p.pos===pos)&&(!team||p.code===team)&&(!conf||byCode(p.code).conf===conf)&&
+      (!pos||p.pos===pos)&&(!team||p.code===team)&&
       (p.min||0)>=minMin &&
       ((p.name||"").toLowerCase().includes(q)||(p.nat||"").toLowerCase().includes(q)));
-
-  // legend
-  $("#plegend").innerHTML = CONF.map(c=>`<i style="background:${confColor(c)}"></i>${c}`).join("");
 
   const drawScatter = (rows)=>{
     const pts = rows.filter(p=>p[ax]!=null && p[ay]!=null);
@@ -365,10 +346,10 @@ function players(){
     const dots=pts.map((p,i)=>{
       const sel = p.name===selCode;
       return `<circle class="dot${sel?" sel":""}" data-i="${i}" cx="${sx(p[ax]).toFixed(1)}" cy="${sy(p[ay]).toFixed(1)}"
-        r="${sel?rad(p)+2.5:rad(p).toFixed(1)}" fill="${confColor(byCode(p.code).conf)}"
+        r="${sel?rad(p)+2.5:rad(p).toFixed(1)}" fill="var(--lime)"
         fill-opacity="${sel?0.95:0.62}" stroke="${sel?"#fff":"none"}" stroke-width="${sel?2:0}"/>`;
     }).join("");
-    const xlabels=ticks(xmin,xmax).map(v=>`<text class="axt" x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle">${(+v.toFixed(2))}</text>`).join("");
+    const xlabels=ticks(xmin,xmax).map(v=>`<text class="axt`+`t" x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle">${(+v.toFixed(2))}</text>`).join("");
     const ylabels=ticks(ymin,ymax).map(v=>`<text class="axt" x="${pad.l-10}" y="${sy(v)+4}" text-anchor="end">${(+v.toFixed(2))}</text>`).join("");
     $("#scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="scatter-svg" id="scsvg">
       <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}"/>
@@ -435,7 +416,6 @@ function players(){
   $("#psearch").addEventListener("input",e=>{q=e.target.value.toLowerCase();refresh()});
   $("#ppos").addEventListener("change",e=>{pos=e.target.value;refresh()});
   $("#pteam").addEventListener("change",e=>{team=e.target.value;refresh()});
-  $("#pconf").addEventListener("change",e=>{conf=e.target.value;refresh()});
   $("#pmin").addEventListener("input",e=>{minMin=+e.target.value;$("#mmval").textContent=minMin;refresh()});
   $("#ax").addEventListener("change",e=>{ax=e.target.value;refresh()});
   $("#ay").addEventListener("change",e=>{ay=e.target.value;refresh()});
@@ -461,11 +441,9 @@ function stats(){
     <div class="filters">
       <span class="muted" style="font-weight:700;font-size:13px">Rank by</span>
       <select id="metric">${metrics.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select>
-      <button class="chip on" data-c="ALL">All</button>
-      ${CONF.filter(c=>c!=="OFC"||true).map(c=>`<button class="chip" data-c="${c}">${c}</button>`).join("")}
     </div>
     <div class="tbl-wrap"><table class="dt" id="tt">
-      <thead><tr><th class="num">#</th><th data-k="name" data-t="s">Team</th><th data-k="conf" data-t="s">Conf</th>
+      <thead><tr><th class="num">#</th><th data-k="name" data-t="s">Team</th>
       <th data-k="matches_played" class="num">P</th><th data-k="wins" class="num">W</th>
       <th data-k="draws" class="num">D</th><th data-k="losses" class="num">L</th>
       <th data-k="goals_scored" class="num">GF</th><th data-k="goals_conceded" class="num">GA</th>
@@ -473,16 +451,15 @@ function stats(){
       <th data-k="xg_for_avg_overall" class="num">xG</th><th data-k="clean_sheets" class="num">CS</th>
       <th data-k="average_possession" class="num">Poss</th></tr></thead>
       <tbody></tbody></table></div>`;
-  let conf="ALL", sortK="goals_scored", dir=-1;
+  let sortK="goals_scored", dir=-1;
   const dirMap=Object.fromEntries(metrics.map(([k,,d])=>[k,d]));
   const tbody=$("#tt tbody");
   const draw=()=>{
-    let rows=cs.filter(r=>conf==="ALL"||r.conf===conf);
+    let rows=[...cs];
     rows.sort((a,b)=>cmp(a[sortK],b[sortK])*dir);
     tbody.innerHTML=rows.map((r,i)=>`<tr>
       <td class="rk num">${i+1}</td>
       <td class="name"><a class="flgcell" href="#/country/${r.code}">${r.flag}${esc(r.name)}</a></td>
-      <td>${confTag(r.conf)}</td>
       <td class="num">${fmt(r.matches_played)}</td><td class="num">${fmt(r.wins)}</td>
       <td class="num">${fmt(r.draws)}</td><td class="num">${fmt(r.losses)}</td>
       <td class="num">${fmt(r.goals_scored)}</td><td class="num">${fmt(r.goals_conceded)}</td>
@@ -492,9 +469,6 @@ function stats(){
   };
   $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1;
     document.querySelectorAll("#tt th").forEach(t=>t.classList.remove("active"));draw()});
-  document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
-    document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
-    b.classList.add("on");conf=b.dataset.c;draw()}));
   document.querySelectorAll("#tt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
     const k=th.dataset.k; if(sortK===k)dir*=-1; else{sortK=k;dir=th.dataset.t==="s"?1:-1;}draw()}));
   draw();
@@ -705,7 +679,6 @@ function teamPill(id,code,isWin){
     <span class="fl">${t.flag}</span><span class="bn">${esc(t.name)}</span></button>`;
 }
 
-
 // Tracks the active mobile view column tab state cleanly across re-renders
 window.currentMobileRound = window.currentMobileRound ?? 0;
 
@@ -814,9 +787,6 @@ window.switchMobileRound = function(idx) {
   document.querySelectorAll(".bracket .bcol").forEach((col, i) => col.classList.toggle("active-round", i === idx));
 };
 
-  
-
-
 /* ---------- ODDS / FANTASY (coming soon) ---------- */
 function odds(){
   app.innerHTML = `<div class="crumbs"><a href="#/">Home</a></div>
@@ -853,7 +823,6 @@ function makeSortable(table, rows, renderFn){
   }));
   draw();
 }
-
 
 function initGroupDragAndDrop() {
   const containers = document.querySelectorAll('.pgcard');
@@ -898,7 +867,6 @@ function initGroupDragAndDrop() {
       const updatedTeamIds = rowElements.map(el => el.dataset.teamId);
 
       // --- CRITICAL STATE MUTATION CALL ---
-      // Pass updatedTeamIds array sequence to your existing state manager to trigger updates:
       updateGroupOrderState(groupId, updatedTeamIds);
     });
 
