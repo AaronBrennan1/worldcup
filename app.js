@@ -717,19 +717,20 @@ function stepKnockout(){
     return; 
   }
 
-  const matchBox=(id,label)=>{
+  // Declaring these as standard statements hoists them safely above the template literal execution scope
+  function matchBox(id, label) {
     const {home,away,thirdPending}=participants(id);
     const w=winnerCode(id);
     if(thirdPending) return `<div class="bmatch"><div class="mm">${label||id}</div><div class="empty-bteam">3rd place TBD</div></div>`;
     return `<div class="bmatch"><div class="mm">${label||id}</div>
       ${teamPill(id,home,w&&w===home)}
       ${teamPill(id,away,w&&w===away)}</div>`;
-  };
+  }
 
-  const col=(title,ids,colIdx,labels)=>{
+  function col(title, ids, colIdx, labels) {
     const isActive = window.currentMobileRound === colIdx ? 'active-round' : '';
     return `<div class="bcol ${isActive}" data-idx="${colIdx}"><h4>${title}</h4>${ids.map((id,i)=>matchBox(id,labels&&labels[i])).join("")}</div>`;
-  };
+  }
 
   const r32ids=["M74","M77","M73","M75","M76","M78","M79","M80","M81","M82","M85","M87","M83","M84","M86","M88"];
   const r16ids=["M89","M90","M91","M92","M95","M96","M93","M94"];
