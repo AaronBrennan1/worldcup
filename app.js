@@ -209,8 +209,8 @@ function country(rest){
           <span>${esc(p.pos)}${p.nat&&p.nat!==t.name?" · "+esc(p.nat):""}</span></div>`).join("")||'<div class="muted">—</div>'}
       </div></div>`;
   } else {
-    const why = t.player_source==="europe_na"
-      ? `Player-level data for European (UEFA) qualifiers isn't in this dataset yet, so an expected XI can't be generated for ${esc(t.name)} at the moment.`
+    const why = t.host
+      ? `${esc(t.name)} qualified automatically as a tournament host, so they have no qualifying matches — an expected XI will be added with live tournament data.`
       : `No player dataset available for ${esc(t.name)} yet.`;
     lineup = `<div class="card panel"><h3>Expected Lineup</h3><div class="empty">${why}</div></div>`;
   }
@@ -289,7 +289,7 @@ function players(){
   app.innerHTML = `
     <div class="kicker">Qualifying · all confederations w/ player data</div>
     <div class="sec-h"><h1>Player Stats</h1><span class="pill">${D.players.length} players</span></div>
-    <p class="muted note">Live World Cup match data will be added once the tournament kicks off. UEFA player-level data isn't in the current source, so European squads aren't listed here yet.</p>
+    <p class="muted note">Covers qualifying across all six confederations. Live World Cup match data will be added once the tournament kicks off. The three hosts (USA, Canada, Mexico) have no qualifiers, so they aren't listed here.</p>
     <div class="filters" style="margin-top:16px">
       <input id="psearch" placeholder="Search player or nationality…">
       <select id="ppos"><option value="">All positions</option>

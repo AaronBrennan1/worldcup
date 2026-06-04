@@ -18,7 +18,7 @@ A static, single-page site for the FIFA World Cup 2026 (USA · Canada · Mexico)
 
 ### Honest data notes
 - **Hosts (USA, Canada, Mexico)** played no qualifiers, so they have no qualification stats/squad — pages say so.
-- **UEFA player-level data** isn't in the source files, so European nations show team stats but not an expected XI yet. (All non-European qualified teams have full squads.)
+- **The three hosts** (USA, Canada, Mexico) qualified automatically, so they have no qualifying matches or qualifier squads — their pages note this and will fill in once live tournament data is added. All 45 non-host nations have full team stats and squads (including all 16 UEFA teams).
 - The source's "Current Club" field is actually the **national team** a player represented in qualifying, so squads are grouped on that (this also correctly handles dual-nationals). Real club affiliations and live match results will slot in when live WC data is wired in — that's why the lineup cards show position/nationality and the "Previous games" panel is a placeholder.
 
 ## Files
