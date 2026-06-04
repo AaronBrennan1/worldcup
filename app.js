@@ -939,7 +939,7 @@ function participants(id){
 function winnerCode(id){
   const {home,away}=participants(id);
   if(!home||!away) return null;
-  if(!window.PRED || !PRED.picks) return null;
+  if(!PRED || !PRED.picks) return null;
   const p=PRED.picks[id];
   if(p===home||p===away) return p;
   return pw(home)>=pw(away)?home:away; 
