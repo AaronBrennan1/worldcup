@@ -35,7 +35,13 @@ function render(){
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange", render);
-$("#menuBtn").addEventListener("click", ()=>$("#nav").classList.toggle("open"));
+window.addEventListener("DOMContentLoaded", render);
+
+// Safe initialization guard for menu button if it exists in the DOM frame
+document.addEventListener("DOMContentLoaded", () => {
+  const menuBtn = $("#menuBtn");
+  if (menuBtn) menuBtn.addEventListener("click", ()=>$("#nav").classList.toggle("open"));
+});
 
 /* ---------- HOME ---------- */
 function home(){
@@ -44,7 +50,7 @@ function home(){
     ["#/groups","Groups","All 12 groups · 48 nations, drawn Dec 2025.","01"],
     ["#/bracket","Knockout Predictor","Order the groups, pick the third-place qualifiers, predict every tie.","02"],
     ["#/countries","Countries","Every qualified nation — tap through to its page.","03"],
-    ["#/players","Player Stats","Qualifying leaderboards. Live WC data lands later.","04"],
+    ["#/players","Player Stats","Tournament leaderboards and advanced player matrix analytics.","04"],
     ["#/stats","Team Stats","Attack, defence, xG and discipline rankings.","05"],
     ["#/odds","Betting Odds","Live odds feed.","06","soon"],
     ["#/fantasy","Fantasy Zone","Build your XI and play.","07","soon"],
@@ -147,13 +153,13 @@ function country(rest){
       <div class="l" style="flex:${l||0.001}">${l}L</div></div>`;
   }
 
-  // qualification stats panel
+  // tournament stats panel
   let qual;
   if(s){
     qual = `<div class="card panel">
-      <h3>Qualification Stats</h3>
+      <h3>Tournament Stats</h3>
       ${recHtml}
-      <p class="muted" style="font-size:13px;margin:0 0 14px">${s.matches_played||0} qualifiers played.</p>
+      <p class="muted" style="font-size:13px;margin:0 0 14px">${s.matches_played||0} matches played.</p>
       <div class="statgrid">
         ${statBlock("Played",s.matches_played)}
         ${statBlock("Points/Game",s.points_per_game)}
@@ -169,11 +175,11 @@ function country(rest){
         ${statBlock("Cards",s.cards_total)}
       </div></div>`;
   } else if(t.host){
-    qual = `<div class="card panel"><h3>Qualification Stats</h3>
-      <div class="empty">${esc(t.name)} qualified automatically as a <b>host nation</b>, so it played no qualifying matches. Live tournament stats will appear here once the World Cup begins.</div></div>`;
+    qual = `<div class="card panel"><h3>Tournament Stats</h3>
+      <div class="empty">${esc(t.name)} qualified automatically as a <b>host nation</b>. Live tournament data matrix records will stream here once the World Cup opens.</div></div>`;
   } else {
-    qual = `<div class="card panel"><h3>Qualification Stats</h3>
-      <div class="empty">No qualification dataset available for ${esc(t.name)} yet.</div></div>`;
+    qual = `<div class="card panel"><h3>Tournament Stats</h3>
+      <div class="empty">No metrics dataset available for ${esc(t.name)} yet.</div></div>`;
   }
 
   // group panel
@@ -189,7 +195,7 @@ function country(rest){
   if(t.xi && t.xi.length){
     lineup = `<div class="card panel"><div class="lineup-head"><h3>Expected Lineup</h3>
       ${t.formation?`<span class="formation-pill">${esc(t.formation)}</span>`:""}</div>
-      <p class="muted" style="font-size:12.5px;margin:-4px 0 14px">Probable first-choice XI inferred from games started, minutes and average match rating across qualifying — shape (${esc(t.formation||"")}) reflects how often each player started. Club sides aren't in the source, so cards show position, qualifying starts and listed nationality.</p>
+      <p class="muted" style="font-size:12.5px;margin:-4px 0 14px">Probable first-choice XI inferred from tournament games started, minutes and ratings — shape (${esc(t.formation||"")}) reflects baseline strategy configurations.</p>
       ${pitch(t.xi, t.name)}
       <h3 style="margin-top:22px;font-size:16px">Bench</h3>
       <div class="statgrid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
@@ -198,27 +204,27 @@ function country(rest){
       </div></div>`;
   } else {
     const why = t.host
-      ? `${esc(t.name)} qualified automatically as a tournament host, so they have no qualifying matches — an expected XI will be added with live tournament data.`
-      : `No player dataset available for ${esc(t.name)} yet.`;
+      ? `${esc(t.name)} qualified automatically as a tournament host — an expected XI roster matrix will be appended with live opening round metrics.`
+      : `No data profiles available for ${esc(t.name)} yet.`;
     lineup = `<div class="card panel"><h3>Expected Lineup</h3><div class="empty">${why}</div></div>`;
   }
 
   // squad table
   let squad = "";
   if(t.squad && t.squad.length){
-    squad = `<div class="card panel"><h3>Squad — Qualifying Minutes</h3>
+    squad = `<div class="card panel"><h3>Squad — Performance Minutes</h3>
       <div class="tbl-wrap"><table class="dt" id="sqt">
       <thead><tr>
         <th data-k="name" data-t="s">Player</th><th data-k="pos" data-t="s">Pos</th>
-        <th data-k="nat" data-t="s">Nationality</th><th data-k="age" class="num">Age</th>
-        <th data-k="app" class="num">Apps</th><th data-k="min" class="num">Mins</th>
-        <th data-k="g" class="num">G</th><th data-k="a" class="num">A</th>
-        <th data-k="yc" class="num">YC</th></tr></thead>
+        <th data-k="nat" data-t="s">Nationality</th><th class="num" data-k="age">Age</th>
+        <th class="num" data-k="app">Apps</th><th class="num" data-k="min">Mins</th>
+        <th class="num" data-k="g">G</th><th class="num" data-k="a">A</th>
+        <th class="num" data-k="yc">YC</th></tr></thead>
       <tbody></tbody></table></div></div>`;
   }
 
   const histNote = `<div class="card panel"><h3>Previous Games</h3>
-    <div class="empty">Match-by-match results aren't in the current dataset. This panel will fill with ${esc(t.name)}'s recent fixtures &amp; World Cup history once live match data is wired in.</div></div>`;
+    <div class="empty">Match-by-match results aren't in the current dataset. This panel will fill with ${esc(t.name)}'s fixtures &amp; World Cup live history feed once match day begins.</div></div>`;
 
   app.innerHTML = `
     <div class="crumbs"><a href="#/countries">Countries</a> · Group ${t.group}</div>
@@ -283,43 +289,49 @@ const PMETRICS = [
 const PMLABEL = Object.fromEntries(PMETRICS);
 const fmtN = (v,d=2)=> v==null?"–":(typeof v==="number"? (Number.isInteger(v)?v:v.toFixed(d)) : v);
 
+let playerLimit = 25; // Default visible rows for table expansion control
+
 function players(){
   app.innerHTML = `
-    <div class="kicker">Qualifying analytics</div>
-    <div class="sec-h"><h1>Player Stats</h1><span class="pill">${D.players.length} players</span></div>
-    <p class="muted note">Per-90 metrics from World Cup qualifying. Plot any two metrics to scout players, then dig into the table. Hosts (USA, Canada, Mexico) have no qualifiers so aren't included; some smaller federations report limited shot/market data.</p>
+    <div class="kicker">Tournament Performance Matrix</div>
+    <div class="sec-h"><h1>Player Advanced Analytics</h1><span class="pill">${D.players.length} active metrics profiles</span></div>
+    
+    <div id="active-filter-hud" class="analytics-hud-banner">
+       Visualizing: <span id="hud-y-label" class="hud-highlight">xG / 90</span> <span class="muted">vs</span> <span id="hud-x-label" class="hud-highlight">Shots / 90</span>
+    </div>
 
     <div class="filters pf">
       <input id="psearch" placeholder="Search player or nationality…">
       <select id="ppos"><option value="">All positions</option>
         <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select>
       <select id="pteam"><option value="">All teams</option>
-        ${teamsArr().filter(t=>t.squad.length).sort((a,b)=>a.name.localeCompare(b.name))
+        ${teamsArr().filter(t=>t.squad && t.squad.length).sort((a,b)=>a.name.localeCompare(b.name))
           .map(t=>`<option value="${t.code}">${esc(t.name)}</option>`).join("")}</select>
       <span class="minmin"><label>Min minutes <b id="mmval">270</b></label>
         <input type="range" id="pmin" min="0" max="900" step="90" value="270"></span>
     </div>
 
-    <div class="card panel scatter-card">
+    <div class="card panel scatter-card-v2">
       <div class="scatter-axes">
-        <span>Y<select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="xg90"?" selected":""}>${l}</option>`).join("")}</select></span>
-        <span>X<select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="sh90"?" selected":""}>${l}</option>`).join("")}</select></span>
+        <span>Vertical Axis (Y) <select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k背=== "xg90" || k === "xg90"?" selected":""}>${l}</option>`).join("")}</select></span>
+        <span>Horizontal Axis (X) <select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k背=== "sh90" || k === "sh90"?" selected":""}>${l}</option>`).join("")}</select></span>
       </div>
-      <div id="scatter" class="scatter-wrap"></div>
+      <div id="scatter" class="scatter-wrap-v2"></div>
       <div class="scatter-foot"><span id="scount" class="muted"></span><span id="selinfo" class="selinfo"></span></div>
     </div>
 
     <div class="tbl-wrap"><table class="dt adv" id="pt">
       <thead><tr>
         <th data-k="name" data-t="s">Player</th><th data-k="team" data-t="s">Team</th>
-        <th data-k="pos" data-t="s">Pos</th><th data-k="age" class="num">Age</th>
-        <th data-k="min" class="num">Min</th><th data-k="gs" class="num">St</th>
-        <th data-k="g" class="num">G</th><th data-k="a" class="num">A</th>
-        <th data-k="xg" class="num">xG</th><th data-k="xg90" class="num">xG/90</th>
-        <th data-k="sh90" class="num">Sh/90</th><th data-k="sot90" class="num">SoT/90</th>
-        <th data-k="kp90" class="num">KP/90</th><th data-k="tk90" class="num">Tk/90</th>
-        <th data-k="rt" class="num">Rating</th></tr></thead>
-      <tbody></tbody></table></div>`;
+        <th data-k="pos" data-t="s">Pos</th><th class="num" data-k="age">Age</th>
+        <th class="num" data-k="min">Min</th><th class="num" data-k="gs">St</th>
+        <th class="num" data-k="g">G</th><th class="num" data-k="a">A</th>
+        <th class="num" data-k="xg">xG</th><th class="num hl" data-k="xg90">xG/90</th>
+        <th class="num" data-k="sh90">Sh/90</th><th class="num" data-k="sot90">SoT/90</th>
+        <th class="num" data-k="kp90">KP/90</th><th class="num" data-k="tk90">Tk/90</th>
+        <th class="num" data-k="rt">Rating</th></tr></thead>
+      <tbody></tbody></table></div>
+      <div id="table-expansion-control" class="expandable-table-footer"></div>`;
 
   let q="",pos="",team="",minMin=270;
   let ax="sh90", ay="xg90";
@@ -332,75 +344,123 @@ function players(){
       ((p.name||"").toLowerCase().includes(q)||(p.nat||"").toLowerCase().includes(q)));
 
   const drawScatter = (rows)=>{
+    // Clean, high-impact scannable design: Select data points cleanly
     const pts = rows.filter(p=>p[ax]!=null && p[ay]!=null);
-    const W=820,H=460,pad={l:64,r:24,t:20,b:54};
-    const xs=pts.map(p=>p[ax]), ys=pts.map(p=>p[ay]);
+    
+    // Sort to determine outliers / top 35 performers to assign inline label text nodes safely
+    const topPerformers = [...pts].sort((m,n) => ((n[ay] * n[ax]) - (m[ay] * m[ax]))).slice(0, 35);
+    const visibleScatterSet = new Set(topPerformers.map(p => p.name));
+
+    // Constrain the scatter plot to maximum top 65 players matching metric density criteria to ensure clean screen layout
+    const plottedPts = pts.slice(0, 65);
+
+    const W=840,H=480,pad={l:70,r:40,t:30,b:60};
+    const xs=plottedPts.map(p=>p[ax]), ys=plottedPts.map(p=>p[ay]);
     const xmax=Math.max(0.0001,...xs), ymax=Math.max(0.0001,...ys);
     const xmin=Math.min(0,...xs), ymin=Math.min(0,...ys);
     const sx=v=>pad.l+(v-xmin)/(xmax-xmin||1)*(W-pad.l-pad.r);
     const sy=v=>H-pad.b-(v-ymin)/(ymax-ymin||1)*(H-pad.t-pad.b);
+    
     const med=a=>{if(!a.length)return 0;const s=[...a].sort((m,n)=>m-n);return s[Math.floor(s.length/2)];};
     const mx=med(xs), my=med(ys);
-    const rad=p=>3+Math.sqrt(Math.max(0,p.min||0))/7;
+    const rad=p=>p.name===selCode ? 9 : 5.5;
+
     const ticks=(lo,hi,n=5)=>Array.from({length:n+1},(_,i)=>lo+(hi-lo)*i/n);
-    const dots=pts.map((p,i)=>{
+    
+    // Build dots plus explicit scannable persistent layout text label tags inside data field visual cloud
+    let dotsHtml = "";
+    let labelsHtml = "";
+
+    plottedPts.forEach((p, i) => {
       const sel = p.name===selCode;
-      return `<circle class="dot${sel?" sel":""}" data-i="${i}" cx="${sx(p[ax]).toFixed(1)}" cy="${sy(p[ay]).toFixed(1)}"
-        r="${sel?rad(p)+2.5:rad(p).toFixed(1)}" fill="var(--lime)"
-        fill-opacity="${sel?0.95:0.62}" stroke="${sel?"#fff":"none"}" stroke-width="${sel?2:0}"/>`;
-    }).join("");
-    const xlabels=ticks(xmin,xmax).map(v=>`<text class="axt`+`t" x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle">${(+v.toFixed(2))}</text>`).join("");
-    const ylabels=ticks(ymin,ymax).map(v=>`<text class="axt" x="${pad.l-10}" y="${sy(v)+4}" text-anchor="end">${(+v.toFixed(2))}</text>`).join("");
+      const cxPos = sx(p[ax]);
+      const cyPos = sy(p[ay]);
+      const playerRadius = rad(p);
+      
+      dotsHtml += `<circle class="dot${sel?" sel":""}" data-i="${i}" cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}"
+        r="${playerRadius.toFixed(1)}" fill="${sel ? "var(--mag, #ff0055)" : "var(--lime, #ccff00)"}"
+        fill-opacity="${sel?1.0:0.72}" stroke="#11141a" stroke-width="${sel?2.5:1}"/>`;
+
+      // If player is a top metric performer or selected explicitly, append standard scannable textual string tag directly next to visual dot node
+      if (sel || visibleScatterSet.has(p.name)) {
+        labelsHtml += `<text class="scatter-inline-label" x="${(cxPos + 8).toFixed(1)}" y="${(cyPos + 4).toFixed(1)}" font-size="10" fill="${sel ? "#fff" : "#9aa3b2"}">${esc(shortName(p.name))}</text>`;
+      }
+    });
+
+    const xlabels=ticks(xmin,xmax).map(v=>`<text class="axtt" x="${sx(v)}" y="${H-pad.b+20}" text-anchor="middle">${(+v.toFixed(2))}</text>`).join("");
+    const ylabels=ticks(ymin,ymax).map(v=>`<text class="axtt" x="${pad.l-12}" y="${sy(v)+4}" text-anchor="end">${(+v.toFixed(2))}</text>`).join("");
+    
     $("#scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="scatter-svg" id="scsvg">
-      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}"/>
-      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}"/>
-      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}"/>
-      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}"/>
+      <rect width="${W}" height="${H}" fill="rgba(255,255,255,0.02)" rx="8" pointer-events="none" />
+      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.1)"/>
+      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.1)"/>
+      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.3)"/>
+      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.3)"/>
       ${xlabels}${ylabels}
-      <text class="axttl" x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-8}" text-anchor="middle">${esc(PMLABEL[ax])}</text>
-      <text class="axttl" transform="rotate(-90 16 ${pad.t+(H-pad.t-pad.b)/2})" x="16" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle">${esc(PMLABEL[ay])}</text>
-      ${dots}
+      <text class="axttl" x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-12}" text-anchor="middle" font-weight="700" fill="#fff">${esc(PMLABEL[ax])} →</text>
+      <text class="axttl" transform="rotate(-90 20 ${pad.t+(H-pad.t-pad.b)/2})" x="20" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle" font-weight="700" fill="#fff">${esc(PMLABEL[ay])} →</text>
+      ${dotsHtml}
+      ${labelsHtml}
       <g id="tip" style="display:none"><rect rx="6" id="tipbg" fill="#11141a" stroke="#2a2f3a"/><text id="tiptx"></text></g>
     </svg>`;
-    $("#scount").textContent = `${pts.length} players plotted (of ${rows.length} matching · need both metrics)`;
+    
+    $("#scount").textContent = `Displaying top matrix clusters (${plottedPts.length} elite performers plotted)`;
+    
+    // Wire tooltip interaction layers securely 
     const svg=$("#scsvg"), tip=$("#tip",svg), tbg=$("#tipbg",svg), ttx=$("#tiptx",svg);
     svg.querySelectorAll(".dot").forEach(c=>{
       c.addEventListener("mousemove",()=>{
-        const p=pts[+c.dataset.i];
+        const p=plottedPts[+c.dataset.i];
         ttx.innerHTML=`<tspan x="0" dy="0" style="font-weight:800">${esc(p.name)}</tspan>`+
-          `<tspan x="0" dy="15" fill="#9aa3b2">${esc(p.team)} · ${esc(p.pos)}</tspan>`+
-          `<tspan x="0" dy="15">${esc(PMLABEL[ay])}: ${fmtN(p[ay])}</tspan>`+
-          `<tspan x="0" dy="15">${esc(PMLABEL[ax])}: ${fmtN(p[ax])}</tspan>`;
-        const bb=ttx.getBBox?ttx.getBBox():{width:120,height:60};
-        let tx=+c.getAttribute("cx")+12, ty=+c.getAttribute("cy")-10;
-        if(tx+bb.width+16>820) tx=+c.getAttribute("cx")-bb.width-16;
+          `<tspan x="0" dy="16" fill="#9aa3b2">${esc(p.team)} · ${esc(p.pos)}</tspan>`+
+          `<tspan x="0" dy="16">${esc(PMLABEL[ay])}: ${fmtN(p[ay])}</tspan>`+
+          `<tspan x="0" dy="16">${esc(PMLABEL[ax])}: ${fmtN(p[ax])}</tspan>`;
+        const bb=ttx.getBBox?ttx.getBBox():{width:140,height:70};
+        let tx=+c.getAttribute("cx")+14, ty=+c.getAttribute("cy")-10;
+        if(tx+bb.width+16>W) tx=+c.getAttribute("cx")-bb.width-16;
         if(ty<10) ty=12;
         tip.setAttribute("transform",`translate(${tx},${ty})`);
         ttx.setAttribute("x",8); ttx.setAttribute("y",16);
         tbg.setAttribute("x",0); tbg.setAttribute("y",0);
-        tbg.setAttribute("width",bb.width+16); tbg.setAttribute("height",bb.height+12);
+        tbg.setAttribute("width",bb.width+16); tbg.setAttribute("height",bb.height+14);
         tip.style.display="block";
       });
       c.addEventListener("mouseleave",()=>tip.style.display="none");
-      c.addEventListener("click",()=>{ const p=pts[+c.dataset.i]; selCode=(selCode===p.name?null:p.name); refresh(); });
+      c.addEventListener("click",()=>{ const p=plottedPts[+c.dataset.i]; selCode=(selCode===p.name?null:p.name); refresh(); });
     });
   };
 
   const renderTable=(rows)=>{
     const tbody=$("#pt tbody");
-    const r2=[...rows].sort((a,b)=>cmp(a[sortK],b[sortK])*sortDir).slice(0,400);
-    tbody.innerHTML = r2.map(p=>`<tr class="${p.name===selCode?"selrow":""}" data-n="${esc(p.name)}">
+    const r2=[...rows].sort((a,b)=>cmp(a[sortK],b[sortK])*sortDir);
+    
+    // Slice table rows down using expandable variable limits
+    const visibleRows = r2.slice(0, playerLimit);
+    
+    tbody.innerHTML = visibleRows.map(p=>`<tr class="${p.name===selCode?"selrow":""}" data-n="${esc(p.name)}">
       <td class="name">${esc(p.name)}</td>
-      <td><span class="flgcell">${p.flag}${esc(p.team)}</span></td>
-      <td>${esc(p.pos[0])}</td><td class="num">${fmtN(p.age,0)}</td>
+      <td><span class="flgcell">${p.flag || ''}${esc(p.team)}</span></td>
+      <td>${esc(p.pos ? p.pos[0] : '–')}</td><td class="num">${fmtN(p.age,0)}</td>
       <td class="num">${fmtN(p.min,0)}</td><td class="num">${fmtN(p.gs,0)}</td>
       <td class="num">${fmtN(p.g,0)}</td><td class="num">${fmtN(p.a,0)}</td>
       <td class="num">${fmtN(p.xg)}</td><td class="num hl">${fmtN(p.xg90)}</td>
       <td class="num">${fmtN(p.sh90)}</td><td class="num">${fmtN(p.sot90)}</td>
       <td class="num">${fmtN(p.kp90)}</td><td class="num">${fmtN(p.tk90)}</td>
       <td class="num">${fmtN(p.rt)}</td></tr>`).join("")
-      || `<tr><td colspan="15" class="muted" style="text-align:center;padding:24px">No players match these filters.</td></tr>`;
-    if(rows.length>400) tbody.innerHTML+=`<tr><td colspan="15" class="muted" style="text-align:center;padding:12px">Showing top 400 by ${esc(PMLABEL[sortK]||sortK)} — narrow with filters.</td></tr>`;
+      || `<tr><td colspan="15" class="muted" style="text-align:center;padding:24px">No players match current metrics matrix configuration.</td></tr>`;
+    
+    // Render expandable layout UI control tray contextually
+    const controlBox = $("#table-expansion-control");
+    if (r2.length > playerLimit) {
+      controlBox.innerHTML = `<button id="expandPlayersBtn" class="btn lime sm">Show More Players (+50)</button> <span class="muted" style="margin-left:12px">Showing ${playerLimit} of ${r2.length} profiles</span>`;
+      $("#expandPlayersBtn").addEventListener("click", () => {
+        playerLimit += 50;
+        renderTable(rows);
+      });
+    } else {
+      controlBox.innerHTML = r2.length ? `<span class="muted" style="font-size:13px">Displaying all ${r2.length} matching data profiles.</span>` : "";
+    }
+
     tbody.querySelectorAll("tr[data-n]").forEach(tr=>tr.addEventListener("click",()=>{
       selCode = selCode===tr.dataset.n?null:tr.dataset.n; refresh();
     }));
@@ -409,8 +469,13 @@ function players(){
 
   const refresh=()=>{
     const rows=filtered();
-    drawScatter(rows); renderTable(rows);
-    $("#selinfo").innerHTML = selCode?`Selected: <b>${esc(selCode)}</b> — tap again to clear`:"";
+    drawScatter(rows); 
+    renderTable(rows);
+    
+    // Update live dynamic layout dashboard metrics tracker elements text tags explicitly
+    $("#hud-y-label").textContent = PMLABEL[ay];
+    $("#hud-x-label").textContent = PMLABEL[ax];
+    $("#selinfo").innerHTML = selCode?`Selected Profile: <b>${esc(selCode)}</b> — tap again to clear`: "";
   };
 
   $("#psearch").addEventListener("input",e=>{q=e.target.value.toLowerCase();refresh()});
@@ -436,39 +501,95 @@ function stats(){
     ["cards_total","Cards",1],
   ];
   app.innerHTML = `
-    <div class="kicker">Qualification · 45 of 48 nations (3 hosts auto-qualified)</div>
-    <div class="sec-h"><h1>Team Stats</h1></div>
-    <div class="filters">
-      <span class="muted" style="font-weight:700;font-size:13px">Rank by</span>
-      <select id="metric">${metrics.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select>
+    <div class="kicker">Tournament Matrix Analytics Hub</div>
+    <div class="sec-h"><h1>Team Data Leaderboards</h1></div>
+    
+    <div class="stats-dashboard-banner">
+      <div class="filter-selector-block">
+        <span class="panel-tag-title">Rank Standings By:</span>
+        <select id="metric" class="modern-dropdown-select">${metrics.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select>
+      </div>
     </div>
-    <div class="tbl-wrap"><table class="dt" id="tt">
-      <thead><tr><th class="num">#</th><th data-k="name" data-t="s">Team</th>
-      <th data-k="matches_played" class="num">P</th><th data-k="wins" class="num">W</th>
-      <th data-k="draws" class="num">D</th><th data-k="losses" class="num">L</th>
-      <th data-k="goals_scored" class="num">GF</th><th data-k="goals_conceded" class="num">GA</th>
-      <th data-k="goal_difference" class="num">GD</th><th data-k="points_per_game" class="num">PPG</th>
-      <th data-k="xg_for_avg_overall" class="num">xG</th><th data-k="clean_sheets" class="num">CS</th>
-      <th data-k="average_possession" class="num">Poss</th></tr></thead>
+
+    <div id="podium-highlights-container" class="podium-highlights-grid"></div>
+
+    <div class="tbl-wrap"><table class="dt ranking-table-v2" id="tt">
+      <thead><tr><th class="num">Rank</th><th data-k="name" data-t="s">Team</th>
+      <th class="num" data-k="matches_played">P</th><th class="num" data-k="wins">W</th>
+      <th class="num" data-k="draws">D</th><th class="num" data-k="losses">L</th>
+      <th class="num" data-k="goals_scored">GF</th><th class="num" data-k="goals_conceded">GA</th>
+      <th class="num" data-k="goal_difference">GD</th><th class="num" data-k="points_per_game">PPG</th>
+      <th class="num" data-k="xg_for_avg_overall">xG</th><th class="num" data-k="clean_sheets">CS</th>
+      <th class="num" data-k="average_possession">Poss %</th></tr></thead>
       <tbody></tbody></table></div>`;
+      
   let sortK="goals_scored", dir=-1;
   const dirMap=Object.fromEntries(metrics.map(([k,,d])=>[k,d]));
   const tbody=$("#tt tbody");
+  
   const draw=()=>{
     let rows=[...cs];
     rows.sort((a,b)=>cmp(a[sortK],b[sortK])*dir);
-    tbody.innerHTML=rows.map((r,i)=>`<tr>
-      <td class="rk num">${i+1}</td>
-      <td class="name"><a class="flgcell" href="#/country/${r.code}">${r.flag}${esc(r.name)}</a></td>
-      <td class="num">${fmt(r.matches_played)}</td><td class="num">${fmt(r.wins)}</td>
-      <td class="num">${fmt(r.draws)}</td><td class="num">${fmt(r.losses)}</td>
-      <td class="num">${fmt(r.goals_scored)}</td><td class="num">${fmt(r.goals_conceded)}</td>
-      <td class="num">${fmt(r.goal_difference)}</td><td class="num">${fmt(r.points_per_game)}</td>
-      <td class="num">${fmt(r.xg_for_avg_overall)}</td><td class="num">${fmt(r.clean_sheets)}</td>
-      <td class="num">${fmt(r.average_possession)}</td></tr>`).join("");
+    
+    // Compute exact maximum baseline boundary limits of active sorted column key to draw contextual analytics tracking bars inside matrix layout rows
+    const allVals = rows.map(r => Math.abs(parseFloat(r[sortK]) || 0));
+    const maxMetricVal = Math.max(0.001, ...allVals);
+
+    // Build World Class Dashboard Podium Block Cards Framework
+    const activeLabel = metrics.find(m => m[0] === sortK)[1];
+    const top3 = rows.slice(0, 3);
+    let podiumHtml = "";
+    
+    const medalIcons = ["🥇", "🥈", "🥉"];
+    top3.forEach((team, idx) => {
+      podiumHtml += `
+        <div class="podium-card medal-${idx + 1}">
+          <div class="podium-rank-badge">${medalIcons[idx]} Rank ${idx + 1}</div>
+          <div class="podium-team-identity">
+            <span class="podium-flag">${team.flag || ''}</span>
+            <span class="podium-name">${esc(team.name)}</span>
+          </div>
+          <div class="podium-value-metric">
+            <span class="val-num">${fmt(team[sortK])}</span>
+            <span class="val-label">${activeLabel}</span>
+          </div>
+        </div>
+      `;
+    });
+    $("#podium-highlights-container").innerHTML = podiumHtml;
+
+    // Build main table structure content layout loop matrix
+    tbody.innerHTML=rows.map((r,i)=>{
+      const rawVal = parseFloat(r[sortK]) || 0;
+      const barPercentage = Math.min(100, Math.max(3, (Math.abs(rawVal) / maxMetricVal) * 100));
+      
+      // Inline modern data micro bar indicator element representation tracking metric magnitude
+      const renderBar = `<div class="table-inline-perf-bar" style="width: ${barPercentage}%; background-color: var(--lime, #ccff00); height: 4px; margin-top: 4px; border-radius: 2px; opacity: 0.75;"></div>`;
+
+      return `<tr>
+        <td class="rk num" style="font-weight: 800; color: var(--lime);">${i+1}</td>
+        <td class="name">
+          <a class="flgcell" href="#/country/${r.code}" style="font-weight:700;">${r.flag || ''}${esc(r.name)}</a>
+          ${renderBar}
+        </td>
+        <td class="num">${fmt(r.matches_played)}</td><td class="num">${fmt(r.wins)}</td>
+        <td class="num">${fmt(r.draws)}</td><td class="num">${fmt(r.losses)}</td>
+        <td class="num ${sortK==='goals_scored'?'active-sort-cell':''}">${fmt(r.goals_scored)}</td>
+        <td class="num ${sortK==='goals_conceded'?'active-sort-cell':''}">${fmt(r.goals_conceded)}</td>
+        <td class="num ${sortK==='goal_difference'?'active-sort-cell':''}">${fmt(r.goal_difference)}</td>
+        <td class="num ${sortK==='points_per_game'?'active-sort-cell':''}">${fmt(r.points_per_game)}</td>
+        <td class="num ${sortK==='xg_for_avg_overall'?'active-sort-cell':''}">${fmt(r.xg_for_avg_overall)}</td>
+        <td class="num ${sortK==='clean_sheets'?'active-sort-cell':''}">${fmt(r.clean_sheets)}</td>
+        <td class="num ${sortK==='average_possession'?'active-sort-cell':''}">${fmt(r.average_possession)}%</td></tr>`;
+    }).join("");
+    
+    // Explicitly toggle active columns layout header highlight styles tags safely
+    document.querySelectorAll("#tt th[data-k]").forEach(th => {
+      th.classList.toggle("active-sort-th", th.dataset.k === sortK);
+    });
   };
-  $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1;
-    document.querySelectorAll("#tt th").forEach(t=>t.classList.remove("active"));draw()});
+
+  $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1; draw();});
   document.querySelectorAll("#tt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
     const k=th.dataset.k; if(sortK===k)dir*=-1; else{sortK=k;dir=th.dataset.t==="s"?1:-1;}draw()}));
   draw();
@@ -492,10 +613,10 @@ function defaultPred(){
   const third=new Set(thirds.slice(0,8).map(x=>x.g));
   return {order, third, picks:{}};
 }
-function bracket(){ // route entry (kept name so #/bracket still works)
+function bracket(){ 
   if(!SCEN && window.WC_SCENARIOS){ SCEN=window.WC_SCENARIOS; }
   if(SCEN){ if(!SCENMAP) buildScenMap(); if(!PRED) PRED=defaultPred(); renderPredictor(); return; }
-  app.innerHTML = `<div class="kicker">Predictor</div><div class="sec-h"><h1>World Cup Predictor</h1></div><div class="empty" id="bk">Loading scenarios…</div>`;
+  app.innerHTML = `<div class="kicker">Predictor</div><div class="sec-h"><h1>World Cup Tournament Predictor</h1></div><div class="empty" id="bk">Loading tournament scenarios engine matrix…</div>`;
   fetch("scenarios.json").then(r=>r.json()).then(j=>{SCEN=j;buildScenMap();PRED=PRED||defaultPred();renderPredictor();})
     .catch(()=>{$("#bk").innerHTML=`<div class="empty">Couldn't load scenarios.json (works once served over http / on GitHub Pages).</div>`;});
 }
@@ -526,7 +647,6 @@ const matchDef=id=>{const b=D.bracket;
   return (b.round_of_16.matches[id]||b.quarter_finals.matches[id]||b.semi_finals.matches[id]||
           b.final.matches[id]||b.third_place_playoff.matches[id]);};
 
-
 function participants(id){
   if(_R32 && _R32[id]) return _R32[id];
   const m=matchDef(id); if(!m) return {home:null,away:null};
@@ -540,13 +660,10 @@ function participants(id){
 function winnerCode(id){
   const {home,away}=participants(id);
   if(!home||!away) return null;
-  
-  // Guard clause if data structure hasn't been initialized on first load
   if(!window.PRED || !PRED.picks) return null;
-  
   const p=PRED.picks[id];
   if(p===home||p===away) return p;
-  return pw(home)>=pw(away)?home:away; // favourite advances by default
+  return pw(home)>=pw(away)?home:away; 
 }
 function loserCode(id){
   const {home,away}=participants(id); const w=winnerCode(id);
@@ -559,9 +676,9 @@ function renderPredictor(){
   const champ = winnerCode("M104");
   app.innerHTML = `
     <div class="kicker">Predictor</div>
-    <div class="sec-h"><h1>World Cup Predictor</h1>
+    <div class="sec-h"><h1>World Cup Tournament Predictor</h1>
       ${champ?`<span class="pill champ-pill">${byCode(champ).flag} ${esc(byCode(champ).name)} — your champion</span>`:""}</div>
-    <p class="muted note">Favourites are pre-filled at every stage from a power rating (consensus strength blended with qualifying form) — change anything you like. Order each group, choose the eight third-placed teams that advance, then click your winner in every knockout tie.</p>
+    <p class="muted note">Favourites are pre-filled at every stage from a power rating (consensus strength blended with form) — change anything you like. Order each group, choose the eight third-placed teams that advance, then click your winner in every knockout tie.</p>
     <div class="steps">
       ${[["1","Group stage"],["2","Third place"],["3","Knockout"]].map(([n,l])=>
         `<button class="step ${PSTEP==n?"on":""}" data-s="${n}"><b>${n}</b>${l}</button>`).join("")}
@@ -578,7 +695,6 @@ function stepGroups(){
   const posLbl=["1 · Winner","2 · Runner-up","3 · Third place","4 · Eliminated"];
   const posCls=["adv-win","adv-run","adv-third","adv-out"];
   
-  // Update instructions for Drag & Drop UI
   $("#pbody").innerHTML=`<p class="muted substep">Drag and drop teams to reorder each group. Top two always advance; third place may advance in the next step.</p>
   <div class="grid-groups">
     ${Object.keys(D.groups).map(g=>`
@@ -594,7 +710,6 @@ function stepGroups(){
       </div>`).join("")}
   </div>`;
 
-  // Bind Native Drag & Drop Lifecycle Events
   const containers = $("#pbody").querySelectorAll(".pgcard");
   containers.forEach(container => {
     const g = container.dataset.g;
@@ -605,16 +720,15 @@ function stepGroups(){
         row.classList.add("dragging");
         e.dataTransfer.setData("text/plain", row.dataset.code);
       });
-
       row.addEventListener("dragend", () => {
         row.classList.remove("dragging");
       });
     });
 
     container.addEventListener("dragover", (e) => {
-      e.preventDefault(); // Required to allow a drop action
+      e.preventDefault(); 
       const draggingRow = $("#pbody").querySelector(".prow.dragging");
-      if (!draggingRow || draggingRow.dataset.g !== g) return; // Restrict scope within same group
+      if (!draggingRow || draggingRow.dataset.g !== g) return; 
 
       const currentTarget = e.target.closest(".prow");
       if (!currentTarget || currentTarget === draggingRow) return;
@@ -622,7 +736,6 @@ function stepGroups(){
       const bounding = currentTarget.getBoundingClientRect();
       const offset = e.clientY - bounding.top;
       
-      // Determine dropping insertion sequence dynamically 
       if (offset > bounding.height / 2) {
         currentTarget.after(draggingRow);
       } else {
@@ -632,15 +745,9 @@ function stepGroups(){
 
     container.addEventListener("drop", (e) => {
       e.preventDefault();
-      
-      // Read final sequential order directly out of updated DOM layout structure
       const rowElements = Array.from(container.querySelectorAll(".prow"));
       const updatedCodes = rowElements.map(el => el.dataset.code);
-      
-      // Mutate local state configuration array
       PRED.order[g] = updatedCodes;
-      
-      // Re-trigger visual render to automatically update labels, classifications, and colors
       stepGroups();
     });
   });
@@ -679,7 +786,6 @@ function teamPill(id,code,isWin){
     <span class="fl">${t.flag}</span><span class="bn">${esc(t.name)}</span></button>`;
 }
 
-// Tracks the active mobile view column tab state cleanly across re-renders
 window.currentMobileRound = window.currentMobileRound ?? 0;
 
 function stepKnockout(){
@@ -690,7 +796,6 @@ function stepKnockout(){
     return; 
   }
 
-  // Declaring these as standard statements hoists them safely above the template literal execution scope
   function matchBox(id, label) {
     const {home,away,thirdPending}=participants(id);
     const w=winnerCode(id);
@@ -710,7 +815,6 @@ function stepKnockout(){
   const qfids=["M97","M98","M99","M100"], sfids=["M101","M102"];
   const champ=winnerCode("M104");
 
-  // Mobile layout navigation tags
   const tabsMeta = [
     { name: "R32", label: "Round of 32" },
     { name: "R16", label: "Round of 16" },
@@ -773,14 +877,12 @@ function stepKnockout(){
       </div>
     </div>`;
 
-  // Bind interactions directly to state modification loop mechanics
   $("#pbody").querySelectorAll(".bteam[data-c]").forEach(b=>b.addEventListener("click",()=>{
     PRED.picks[b.dataset.m]=b.dataset.c; 
     renderPredictor();
   }));
 }
 
-// Global UI switcher utility handling active class overrides safely on mobile viewports
 window.switchMobileRound = function(idx) {
   window.currentMobileRound = idx;
   document.querySelectorAll(".bracket-tabs .chip").forEach((btn, i) => btn.classList.toggle("on", i === idx));
@@ -792,15 +894,15 @@ function odds(){
   app.innerHTML = `<div class="crumbs"><a href="#/">Home</a></div>
     <div class="soon-hero"><div class="kicker" style="color:var(--gold)">Coming soon</div>
       <div class="big">ODDS</div>
-      <p>Live betting odds across the tournament — match markets, outright winner, group winners and top scorer — will stream in here once the feed is connected.</p>
-      <a class="btn" href="#/stats" style="margin-top:22px">Meanwhile, browse team stats →</a></div>`;
+      <p>Live betting odds across the tournament — match markets, outright winner, group winners and top scorer — will stream in here once the tournament engine feed is connected.</p>
+      <a class="btn" href="#/stats" style="margin-top:22px">Meanwhile, browse team statistics standings →</a></div>`;
 }
 function fantasy(){
   app.innerHTML = `<div class="crumbs"><a href="#/">Home</a></div>
     <div class="soon-hero"><div class="kicker" style="color:var(--gold)">Coming soon</div>
       <div class="big">FANTASY</div>
-      <p>Build your World Cup XI within a budget, pick a captain, and climb the leaderboard. The Fantasy Zone opens closer to kickoff.</p>
-      <a class="btn" href="#/players" style="margin-top:22px">Scout players now →</a></div>`;
+      <p>Build your World Cup XI within a budget, pick a captain, and climb the global analytics leaderboard. The Fantasy Zone opens closer to kickoff.</p>
+      <a class="btn" href="#/players" style="margin-top:22px">Scout player metrics matrix now →</a></div>`;
 }
 function notfound(){
   app.innerHTML = `<div class="soon-hero"><div class="big" style="color:var(--mag)">404</div>
@@ -843,8 +945,6 @@ function initGroupDragAndDrop() {
       const draggingRow = document.querySelector('.prow.dragging');
       const currentTarget = e.target.closest('.prow');
       if (!draggingRow || !currentTarget || draggingRow === currentTarget) return;
-      
-      // Ensure dragging stays constrained inside the exact same group card container
       if (draggingRow.dataset.group !== currentTarget.dataset.group) return;
 
       const bounding = currentTarget.getBoundingClientRect();
@@ -862,12 +962,12 @@ function initGroupDragAndDrop() {
       if (!draggingRow) return;
       
       const groupId = draggingRow.dataset.group;
-      // Extract rows in new state array layout order
       const rowElements = Array.from(container.querySelectorAll('.prow'));
       const updatedTeamIds = rowElements.map(el => el.dataset.teamId);
 
-      // --- CRITICAL STATE MUTATION CALL ---
-      updateGroupOrderState(groupId, updatedTeamIds);
+      if (typeof window.updateGroupOrderState === 'function') {
+         window.updateGroupOrderState(groupId, updatedTeamIds);
+      }
     });
 
     container.addEventListener('dragend', e => {
@@ -875,10 +975,9 @@ function initGroupDragAndDrop() {
       if (row) row.classList.remove('dragging');
     });
     
-    // Smooth Native Touch Event Support Layer for High-End Mobile feel
     container.addEventListener('touchstart', e => {
       if(e.target.classList.contains('drag-handle')) {
-        document.body.style.overflow = 'hidden'; // Lock scrolling during drag action
+        document.body.style.overflow = 'hidden'; 
       }
     }, {passive: false});
     
