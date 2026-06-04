@@ -7,6 +7,21 @@ const $ = (s, r=document) => r.querySelector(s);
 
 const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = v => v==null||v===""?"–":v;
+
+/* mobile detection — the players/stats pages use a fully bespoke layout below this width */
+const MOBILE_BP = 760;
+const isMobile = () => window.matchMedia(`(max-width:${MOBILE_BP}px)`).matches;
+/* re-run the active route if the viewport crosses the phone/desktop boundary,
+   so the right (mobile vs desktop) layout is always shown after a rotate/resize */
+let _wasMobile = isMobile();
+window.addEventListener("resize", () => {
+  const now = isMobile();
+  if (now !== _wasMobile){
+    _wasMobile = now;
+    const [r] = parseHash();
+    if (r === "players" || r === "stats") render();
+  }
+});
 const teamsArr = () => Object.values(D.teams);
 const byCode = c => D.teams[c];
 const groupOf = code => byCode(code)?.group;
@@ -124,6 +139,140 @@ const injectGlobalDashboardStyles = () => {
       .chart-head h3{font-size:18px}
     }
     @media(max-width:520px){.ctrlbar{grid-template-columns:1fr}}
+
+    /* =========================================================
+       MOBILE-NATIVE LAYOUT (players + team stats)
+       A bespoke phone experience: no horizontal scrolling tables,
+       no cramped scatter plot. Instead: a sticky focus rail,
+       ranked stat cards with inline bars, a podium strip, an
+       expandable detail drawer, and a slide-up filter sheet.
+       ========================================================= */
+    .mdash{display:flex;flex-direction:column;gap:16px;animation:dashIn .35s ease}
+
+    /* hero */
+    .m-hero{padding:2px 2px 0}
+    .m-hero .kicker{font-size:11px}
+    .m-hero h1{font-family:"Anton",sans-serif;font-size:30px;line-height:.98;text-transform:uppercase;margin:4px 0 0}
+    .m-hero .m-sub{color:var(--mut);font-size:13px;margin:8px 0 0;line-height:1.45}
+    .m-hero .m-count{display:inline-block;margin-top:10px;font-family:"Spline Sans Mono",monospace;
+      font-size:11.5px;color:var(--lime);background:rgba(200,255,0,.08);border:1px solid rgba(200,255,0,.25);
+      padding:4px 10px;border-radius:999px;font-weight:700}
+
+    /* sticky focus rail — choose the stat that everything ranks/sorts by */
+    .m-focuswrap{position:sticky;top:0;z-index:30;margin:0 -16px;padding:10px 0 9px;
+      background:linear-gradient(180deg,var(--bg,#0a0c10) 72%,rgba(10,12,16,0));backdrop-filter:blur(6px)}
+    .m-focus-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);
+      font-weight:800;padding:0 16px 7px;display:flex;align-items:center;gap:8px}
+    .m-focus-label b{color:var(--lime);font-family:"Spline Sans Mono",monospace}
+    .m-rail{display:flex;gap:8px;overflow-x:auto;padding:0 16px 2px;scrollbar-width:none;
+      -webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+    .m-rail::-webkit-scrollbar{display:none}
+    .m-chip{flex:0 0 auto;scroll-snap-align:start;border:1px solid var(--line);background:var(--ink3);
+      color:var(--mut);font-weight:800;font-size:13px;padding:9px 15px;border-radius:999px;white-space:nowrap;
+      transition:.16s;cursor:pointer;font-family:inherit}
+    .m-chip:active{transform:scale(.96)}
+    .m-chip.on{background:var(--lime);border-color:var(--lime);color:#10130a;box-shadow:0 4px 14px rgba(200,255,0,.25)}
+
+    /* toolbar: sort-direction + filter trigger */
+    .m-toolbar{display:flex;gap:10px;align-items:center}
+    .m-toolbar .m-sortbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+      background:var(--ink3);border:1px solid var(--line);color:var(--txt);border-radius:12px;
+      padding:11px 14px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer}
+    .m-toolbar .m-sortbtn .dir{color:var(--lime);font-family:"Spline Sans Mono",monospace}
+    .m-toolbar .m-filterbtn{position:relative;display:flex;align-items:center;gap:8px;background:var(--ink3);
+      border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:11px 16px;font-weight:800;
+      font-size:13px;font-family:inherit;cursor:pointer}
+    .m-toolbar .m-filterbtn.has-active{border-color:var(--lime);color:var(--lime)}
+    .m-toolbar .m-filterbtn .dotbadge{width:7px;height:7px;border-radius:50%;background:var(--mag)}
+
+    /* podium strip — top 3 for the chosen focus */
+    .m-podium{display:flex;gap:10px}
+    .m-podium .pod{flex:1;position:relative;border-radius:14px;padding:14px 10px 12px;text-align:center;
+      background:linear-gradient(180deg,var(--ink2),var(--ink));border:1px solid var(--line);overflow:hidden}
+    .m-podium .pod .rk{font-family:"Spline Sans Mono",monospace;font-size:11px;font-weight:700;color:var(--mut)}
+    .m-podium .pod .fl{font-size:30px;line-height:1;margin:5px 0 3px}
+    .m-podium .pod .nm{font-family:"Anton",sans-serif;font-size:14px;text-transform:uppercase;line-height:1;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .m-podium .pod .vl{font-family:"Anton",sans-serif;font-size:22px;color:var(--lime);line-height:1;margin-top:8px}
+    .m-podium .pod.g1{border-top:3px solid var(--gold)}
+    .m-podium .pod.g2{border-top:3px solid #cdd3da}
+    .m-podium .pod.g3{border-top:3px solid #cd7f32}
+    .m-podium .pod .medal{position:absolute;top:8px;right:9px;font-size:15px}
+
+    /* ranked stat cards */
+    .m-list{display:flex;flex-direction:column;gap:9px}
+    .m-card{background:linear-gradient(180deg,var(--ink2),var(--ink));border:1px solid var(--line);
+      border-radius:14px;overflow:hidden;transition:border-color .15s}
+    .m-card.sel{border-color:var(--mag);box-shadow:0 0 0 1px var(--mag) inset}
+    .m-card .m-row{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer}
+    .m-card .m-rank{flex:0 0 26px;text-align:center;font-family:"Anton",sans-serif;font-size:19px;color:var(--mut)}
+    .m-card .m-rank.top{color:var(--lime)}
+    .m-card .m-flag{flex:0 0 auto;font-size:25px;line-height:1}
+    .m-card .m-id{flex:1;min-width:0}
+    .m-card .m-name{font-weight:800;font-size:15px;color:var(--txt);white-space:nowrap;overflow:hidden;
+      text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
+    .m-card .m-meta{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+    .m-card .m-meta .dot-sep{opacity:.4}
+    .m-card .m-statend{flex:0 0 auto;text-align:right;min-width:62px}
+    .m-card .m-bigval{font-family:"Anton",sans-serif;font-size:23px;color:var(--lime);line-height:1}
+    .m-card .m-bigval.lower{color:#ff5fa2}
+    .m-card .m-statlbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-top:3px}
+    .m-card .m-chev{flex:0 0 auto;color:var(--mut2);transition:transform .2s;font-size:13px}
+    .m-card.open .m-chev{transform:rotate(90deg)}
+    /* inline bar under the name */
+    .m-card .m-barrow{padding:0 14px 12px;margin-top:-3px}
+    .m-card .m-bar{height:6px;border-radius:4px;background:var(--ink3);overflow:hidden}
+    .m-card .m-bar i{display:block;height:100%;border-radius:4px;
+      background:linear-gradient(90deg,var(--lime),#9fd400)}
+    .m-card .m-bar i.lower{background:linear-gradient(90deg,#ff2d87,#b51e60)}
+
+    /* expandable detail drawer */
+    .m-detail{display:none;padding:2px 14px 15px;border-top:1px solid var(--line);
+      background:rgba(255,255,255,.012)}
+    .m-card.open .m-detail{display:block;animation:dashIn .25s ease}
+    .m-detail .pos-badge{margin-bottom:10px}
+    .m-statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
+    .m-statgrid .sg{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 8px;text-align:center}
+    .m-statgrid .sg .k{font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:800}
+    .m-statgrid .sg .v{font-family:"Spline Sans Mono",monospace;font-size:14px;color:#fff;font-weight:700;margin-top:4px}
+    .m-statgrid .sg.hl{border-color:rgba(200,255,0,.4);background:rgba(200,255,0,.06)}
+    .m-statgrid .sg.hl .v{color:var(--lime)}
+    .m-detail .m-detail-actions{margin-top:12px;display:flex;gap:9px}
+    .m-detail .m-detail-actions .btn{flex:1;justify-content:center;padding:10px}
+
+    .m-empty{text-align:center;color:var(--mut);padding:40px 18px;background:var(--ink2);
+      border:1px dashed var(--line);border-radius:14px;font-size:14px}
+    .m-showmore{display:flex;justify-content:center;padding:4px 0 2px}
+    .m-showmore .btn{width:100%;justify-content:center;padding:13px}
+
+    /* slide-up filter sheet */
+    .m-sheet-scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);z-index:200;
+      opacity:0;pointer-events:none;transition:opacity .2s}
+    .m-sheet-scrim.show{opacity:1;pointer-events:auto}
+    .m-sheet{position:fixed;left:0;right:0;bottom:0;z-index:201;background:var(--ink2);
+      border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:8px 18px calc(20px + env(safe-area-inset-bottom));
+      transform:translateY(110%);transition:transform .26s cubic-bezier(.32,.72,0,1);max-height:86vh;overflow-y:auto}
+    .m-sheet.show{transform:none}
+    .m-sheet .grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:6px auto 14px}
+    .m-sheet h3{font-family:"Anton",sans-serif;font-size:19px;text-transform:uppercase;margin-bottom:14px}
+    .m-sheet .m-field{margin-bottom:16px}
+    .m-sheet .m-field>label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;
+      color:var(--mut);font-weight:800;margin-bottom:8px}
+    .m-sheet .m-field>label b{color:var(--lime);font-family:"Spline Sans Mono",monospace}
+    .m-sheet input[type=text],.m-sheet select{width:100%;background:var(--ink3);border:1px solid var(--line);
+      color:var(--txt);padding:13px 14px;border-radius:11px;font-size:16px;font-family:inherit}
+    .m-sheet input:focus,.m-sheet select:focus{outline:none;border-color:var(--lime)}
+    .m-sheet input[type=range]{width:100%;accent-color:var(--lime);height:30px}
+    .m-segwrap{display:flex;flex-wrap:wrap;gap:8px}
+    .m-seg{flex:1 1 auto;text-align:center;border:1px solid var(--line);background:var(--ink3);color:var(--mut);
+      border-radius:10px;padding:11px 8px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;min-width:72px}
+    .m-seg.on{background:var(--lime);border-color:var(--lime);color:#10130a}
+    .m-sheet .m-sheet-foot{display:flex;gap:10px;margin-top:6px;position:sticky;bottom:0;
+      background:var(--ink2);padding-top:10px}
+    .m-sheet .m-sheet-foot .btn{flex:1;justify-content:center;padding:14px}
+
+    /* hide the bespoke mobile layout above the breakpoint, just in case */
+    @media(min-width:${MOBILE_BP + 1}px){ .mdash,.m-sheet,.m-sheet-scrim{display:none!important} }
   `;
   document.head.appendChild(style);
 };
@@ -418,6 +567,7 @@ function axisBounds(vals){
 
 function players(){
   injectGlobalDashboardStyles();
+  if(isMobile()){ return playersMobile(); }
 
   // local state (no leaky globals — resets cleanly on every visit)
   let q="", pos="", team="", minMin=270, topN=20;
@@ -659,9 +809,217 @@ function players(){
   refresh();
 }
 
+/* =========================================================
+   MOBILE EXPERIENCE — players & team stats
+   Shared helper: a slide-up filter sheet that any caller can
+   populate with fields and read back on apply.
+   ========================================================= */
+function openSheet(innerHTML, onApply, onWire){
+  // remove any stale sheet first
+  document.querySelectorAll(".m-sheet,.m-sheet-scrim").forEach(n=>n.remove());
+  const scrim=document.createElement("div"); scrim.className="m-sheet-scrim";
+  const sheet=document.createElement("div"); sheet.className="m-sheet";
+  sheet.innerHTML=`<div class="grab"></div>${innerHTML}
+    <div class="m-sheet-foot">
+      <button class="btn" data-sheet="reset">Reset</button>
+      <button class="btn lime" data-sheet="apply">Show results</button>
+    </div>`;
+  document.body.appendChild(scrim); document.body.appendChild(sheet);
+  document.body.style.overflow="hidden";
+  requestAnimationFrame(()=>{ scrim.classList.add("show"); sheet.classList.add("show"); });
+  const close=()=>{
+    scrim.classList.remove("show"); sheet.classList.remove("show");
+    document.body.style.overflow="";
+    setTimeout(()=>{ scrim.remove(); sheet.remove(); },280);
+  };
+  scrim.addEventListener("click",close);
+  sheet.querySelector('[data-sheet="apply"]').addEventListener("click",()=>{ onApply&&onApply(sheet,false); close(); });
+  sheet.querySelector('[data-sheet="reset"]').addEventListener("click",()=>{ onApply&&onApply(sheet,true); close(); });
+  onWire&&onWire(sheet);
+  return {close};
+}
+
+/* ---------- PLAYERS (mobile) ---------- */
+function playersMobile(){
+  // focus metrics surfaced as quick chips (the rest live in the table-style detail)
+  const FOCUS = [
+    ["xg90","xG/90"],["g90","Goals/90"],["a90","Assists/90"],["ga90","G+A/90"],
+    ["sh90","Shots/90"],["sot90","SoT/90"],["kp90","Key P/90"],["cc90","Chances/90"],
+    ["drb90","Dribbles/90"],["tk90","Tackles/90"],["int90","Intercept/90"],["rt","Rating"],
+    ["g","Goals"],["a","Assists"],["xg","xG total"],["min","Minutes"],
+  ];
+  const lowerBetter = new Set([]); // for players, every focus metric is higher-is-better
+  let q="", pos="", team="", minMin=270;
+  let focus="xg90", dir=-1, limit=15, openName=null, selName=null;
+
+  const base = D.players.slice();
+  const filtered = ()=> base.filter(p=>
+      (!pos||p.pos===pos) && (!team||p.code===team) &&
+      (p.min||0)>=minMin &&
+      ((p.name||"").toLowerCase().includes(q) || (p.nat||"").toLowerCase().includes(q)));
+  const posTag = p => p.pos ? p.pos.substring(0,2).toUpperCase() : "—";
+  const activeFilters = ()=> (q?1:0)+(pos?1:0)+(team?1:0)+(minMin!==270?1:0);
+
+  app.innerHTML = `
+    <div class="mdash">
+      <div class="m-hero">
+        <div class="kicker">Player Statistics</div>
+        <h1>Player Stats</h1>
+        <p class="m-sub">Per-90 metrics so everyone’s compared on equal footing. Pick a stat to rank by, tap a card for the full breakdown.</p>
+        <span class="m-count" id="m-count"></span>
+      </div>
+
+      <div class="m-focuswrap">
+        <div class="m-focus-label">Ranking by <b id="m-focus-name"></b></div>
+        <div class="m-rail" id="m-rail">
+          ${FOCUS.map(([k,l])=>`<button class="m-chip${k===focus?" on":""}" data-focus="${k}">${l}</button>`).join("")}
+        </div>
+      </div>
+
+      <div class="m-toolbar">
+        <button class="m-sortbtn" id="m-sort"><span id="m-sort-lbl"></span> <span class="dir" id="m-dir"></span></button>
+        <button class="m-filterbtn" id="m-filter">Filters <span id="m-fbadge"></span></button>
+      </div>
+
+      <div class="m-list" id="m-list"></div>
+      <div class="m-showmore" id="m-more"></div>
+    </div>`;
+
+  const draw = ()=>{
+    const rows = filtered().sort((a,b)=>cmp(a[focus],b[focus])*dir);
+    const view = rows.slice(0,limit);
+    const maxAbs = Math.max(0.0001, ...rows.map(r=>Math.abs(parseFloat(r[focus])||0)));
+    const lower = lowerBetter.has(focus);
+
+    $("#m-count").textContent = `${rows.length} player${rows.length===1?"":"s"} shown`;
+    $("#m-focus-name").textContent = PMLABEL[focus]||focus;
+    $("#m-sort-lbl").textContent = PMLABEL[focus]||focus;
+    $("#m-dir").textContent = dir<0 ? "▼ high→low" : "▲ low→high";
+    const fb=$("#m-fbadge"), filt=activeFilters();
+    $("#m-filter").classList.toggle("has-active", filt>0);
+    fb.innerHTML = filt>0 ? `<span class="dotbadge"></span>` : "";
+
+    const list=$("#m-list");
+    if(!view.length){
+      list.innerHTML=`<div class="m-empty">No players match these filters.<br>Try lowering the minimum minutes.</div>`;
+      $("#m-more").innerHTML=""; return;
+    }
+    list.innerHTML = view.map((p,i)=>{
+      const tag=posTag(p);
+      const val=p[focus];
+      const pct=Math.min(100,Math.max(4,(Math.abs(parseFloat(val)||0)/maxAbs)*100));
+      const open=p.name===openName, sel=p.name===selName;
+      const sg=(k,lbl)=>`<div class="sg ${k===focus?"hl":""}"><div class="k">${lbl}</div><div class="v">${fmtN(p[k])}</div></div>`;
+      return `<div class="m-card${open?" open":""}${sel?" sel":""}" data-n="${esc(p.name)}">
+        <div class="m-row" data-toggle="${esc(p.name)}">
+          <div class="m-rank ${i<3?"top":""}">${i+1}</div>
+          <div class="m-flag">${p.flag||"🏳️"}</div>
+          <div class="m-id">
+            <div class="m-name">${esc(p.name)}</div>
+            <div class="m-meta"><span class="pos-badge pos-${tag}">${tag}</span>
+              <span>${esc(p.team)}</span><span class="dot-sep">·</span><span>${fmtN(p.min,0)} min</span></div>
+          </div>
+          <div class="m-statend">
+            <div class="m-bigval${lower?" lower":""}">${fmtN(val)}</div>
+            <div class="m-statlbl">${PMLABEL[focus]||focus}</div>
+          </div>
+          <div class="m-chev">▶</div>
+        </div>
+        <div class="m-barrow"><div class="m-bar"><i class="${lower?"lower":""}" style="width:${pct}%"></i></div></div>
+        <div class="m-detail">
+          <div class="m-statgrid">
+            ${sg("g","Goals")}${sg("a","Assists")}${sg("xg","xG")}
+            ${sg("xg90","xG/90")}${sg("sh90","Sh/90")}${sg("sot90","SoT/90")}
+            ${sg("kp90","KeyP/90")}${sg("drb90","Drb/90")}${sg("tk90","Tk/90")}
+            ${sg("pasc","Pass%")}${sg("rt","Rating")}${sg("age","Age")}
+          </div>
+          <div class="m-detail-actions">
+            <button class="btn lime sm" data-select="${esc(p.name)}">${sel?"Clear highlight":"Highlight player"}</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll("[data-toggle]").forEach(row=>row.addEventListener("click",()=>{
+      const n=row.dataset.toggle; openName = openName===n?null:n; draw();
+    }));
+    list.querySelectorAll("[data-select]").forEach(b=>b.addEventListener("click",e=>{
+      e.stopPropagation(); const n=b.dataset.select; selName = selName===n?null:n; draw();
+    }));
+
+    const more=$("#m-more");
+    if(rows.length>limit){
+      more.innerHTML=`<button class="btn" id="m-morebtn">Show ${Math.min(15,rows.length-limit)} more · ${limit} of ${rows.length}</button>`;
+      $("#m-morebtn").addEventListener("click",()=>{limit+=15;draw();});
+    } else if(rows.length>15){
+      more.innerHTML=`<button class="btn" id="m-lessbtn">Show fewer</button>`;
+      $("#m-lessbtn").addEventListener("click",()=>{limit=15;draw();window.scrollTo({top:0,behavior:"smooth"});});
+    } else { more.innerHTML=""; }
+  };
+
+  // focus rail
+  $("#m-rail").querySelectorAll(".m-chip").forEach(ch=>ch.addEventListener("click",()=>{
+    focus=ch.dataset.focus; dir=-1; limit=15;
+    $("#m-rail").querySelectorAll(".m-chip").forEach(c=>c.classList.toggle("on",c===ch));
+    ch.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"});
+    draw();
+  }));
+  // sort direction toggle
+  $("#m-sort").addEventListener("click",()=>{dir*=-1;draw();});
+
+  // filter sheet
+  $("#m-filter").addEventListener("click",()=>{
+    const posOpts=["","Goalkeeper","Defender","Midfielder","Forward"];
+    const posLbls=["All","GK","DEF","MID","FWD"];
+    const teamsList = teamsArr().filter(t=>t.squad && t.squad.length).sort((a,b)=>a.name.localeCompare(b.name));
+    openSheet(`
+      <h3>Filter players</h3>
+      <div class="m-field">
+        <label>Search player or nation</label>
+        <input type="text" id="sf-q" placeholder="e.g. Mbappé, Brazil…" value="${esc(q)}">
+      </div>
+      <div class="m-field">
+        <label>Position</label>
+        <div class="m-segwrap" id="sf-pos">
+          ${posOpts.map((v,i)=>`<button class="m-seg${v===pos?" on":""}" data-v="${v}">${posLbls[i]}</button>`).join("")}
+        </div>
+      </div>
+      <div class="m-field">
+        <label>Team</label>
+        <select id="sf-team"><option value="">All teams</option>
+          ${teamsList.map(t=>`<option value="${t.code}"${t.code===team?" selected":""}>${esc(t.name)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="m-field">
+        <label>Minimum minutes played: <b id="sf-mmval">${minMin}</b></label>
+        <input type="range" id="sf-min" min="0" max="900" step="90" value="${minMin}">
+      </div>`,
+      (sheet,reset)=>{
+        if(reset){ q="";pos="";team="";minMin=270; }
+        else {
+          q=(sheet.querySelector("#sf-q").value||"").toLowerCase().trim();
+          pos=sheet.querySelector("#sf-pos .m-seg.on")?.dataset.v||"";
+          team=sheet.querySelector("#sf-team").value||"";
+          minMin=+sheet.querySelector("#sf-min").value;
+        }
+        limit=15; openName=null; draw();
+      },
+      (sheet)=>{
+        sheet.querySelectorAll("#sf-pos .m-seg").forEach(b=>b.addEventListener("click",()=>{
+          sheet.querySelectorAll("#sf-pos .m-seg").forEach(x=>x.classList.toggle("on",x===b));
+        }));
+        const rng=sheet.querySelector("#sf-min"), out=sheet.querySelector("#sf-mmval");
+        rng.addEventListener("input",()=>out.textContent=rng.value);
+      });
+  });
+
+  draw();
+}
+
 /* ---------- TEAM STATS ---------- */
 function stats(){
   injectGlobalDashboardStyles();
+  if(isMobile()){ return statsMobile(); }
 
   const cs = D.country_stats.slice();
   const metrics = [
@@ -870,6 +1228,163 @@ function stats(){
   document.querySelectorAll("#tt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
     const k=th.dataset.k; if(sortK===k)dir*=-1; else {sortK=k;dir=th.dataset.t==="s"?1:(dirMap[k]||-1);} draw();
   }));
+
+  draw();
+}
+
+/* ---------- TEAM STATS (mobile) ---------- */
+function statsMobile(){
+  const cs = D.country_stats.slice();
+  const metrics = [
+    ["points_per_game","PPG",-1],["goals_scored","Goals",-1],["goal_difference","Goal Diff",-1],
+    ["win_percentage","Win %",-1],["xg_for_avg_overall","xG/match",-1],["clean_sheets","Clean Sheets",-1],
+    ["average_possession","Possession",-1],["goals_conceded","Conceded",1],["cards_total","Cards",1],
+  ];
+  const dirMap   = Object.fromEntries(metrics.map(([k,,d])=>[k,d]));
+  const labelMap = Object.fromEntries(metrics.map(([k,l])=>[k,l]));
+  const isPct = k => k==="average_possession" || k==="win_percentage";
+
+  let focus="points_per_game", dir=-1, openCode=null, selCode=null, limit=16, q="";
+  const filtered = ()=> cs.filter(r=> !q || (r.name||"").toLowerCase().includes(q) || (r.code||"").toLowerCase().includes(q) || (r.group||"").toLowerCase()===q);
+  const activeFilters = ()=> (q?1:0);
+
+  app.innerHTML = `
+    <div class="mdash">
+      <div class="m-hero">
+        <div class="kicker">Team Statistics</div>
+        <h1>Team Stats</h1>
+        <p class="m-sub">Tournament performance for every nation. Pick a metric to rank by — podium and cards update together. Tap a team for the full line.</p>
+        <span class="m-count" id="ms-count"></span>
+      </div>
+
+      <div class="m-focuswrap">
+        <div class="m-focus-label">Ranking by <b id="ms-focus-name"></b></div>
+        <div class="m-rail" id="ms-rail">
+          ${metrics.map(([k,l])=>`<button class="m-chip${k===focus?" on":""}" data-focus="${k}">${l}</button>`).join("")}
+        </div>
+      </div>
+
+      <div class="m-podium" id="ms-podium"></div>
+
+      <div class="m-toolbar">
+        <button class="m-sortbtn" id="ms-sort"><span id="ms-sort-lbl"></span> <span class="dir" id="ms-dir"></span></button>
+        <button class="m-filterbtn" id="ms-filter">Filters <span id="ms-fbadge"></span></button>
+      </div>
+
+      <div class="m-list" id="ms-list"></div>
+      <div class="m-showmore" id="ms-more"></div>
+    </div>`;
+
+  const val = (r,k)=> parseFloat(r[k])||0;
+  const suffix = k => isPct(k) ? "%" : "";
+
+  const draw = ()=>{
+    const all = filtered().sort((a,b)=>cmp(a[focus],b[focus])*dir);
+    const lower = dirMap[focus]===1;
+    const higherBetter = !lower;
+    // podium is always the BEST three for the metric regardless of sort direction
+    const best = [...filtered()].sort((a,b)=>cmp(a[focus],b[focus])*(higherBetter?-1:1)).slice(0,3);
+    const maxAbs = Math.max(0.0001, ...filtered().map(r=>Math.abs(val(r,focus))));
+
+    $("#ms-count").textContent = `${all.length} team${all.length===1?"":"s"}`;
+    $("#ms-focus-name").textContent = labelMap[focus];
+    $("#ms-sort-lbl").textContent = labelMap[focus];
+    $("#ms-dir").textContent = dir<0 ? "▼ high→low" : "▲ low→high";
+    const filt=activeFilters();
+    $("#ms-filter").classList.toggle("has-active", filt>0);
+    $("#ms-fbadge").innerHTML = filt>0 ? `<span class="dotbadge"></span>` : "";
+
+    // podium
+    const medals=["🥇","🥈","🥉"], gcls=["g1","g2","g3"];
+    $("#ms-podium").innerHTML = best.map((t,i)=>`
+      <div class="pod ${gcls[i]}" data-code="${t.code}">
+        <div class="medal">${medals[i]}</div>
+        <div class="rk">#${i+1}</div>
+        <div class="fl">${t.flag||"🏳️"}</div>
+        <div class="nm">${esc(t.code)}</div>
+        <div class="vl">${fmt(t[focus])}${suffix(focus)}</div>
+      </div>`).join("");
+    $("#ms-podium").querySelectorAll(".pod").forEach(el=>el.addEventListener("click",()=>{
+      openCode = el.dataset.code; selCode = el.dataset.code;
+      const card = $(`#ms-list .m-card[data-code="${el.dataset.code}"]`);
+      draw();
+      const c2 = $(`#ms-list .m-card[data-code="${el.dataset.code}"]`);
+      if(c2) c2.scrollIntoView({block:"center",behavior:"smooth"});
+    }));
+
+    const view = all.slice(0,limit);
+    const list=$("#ms-list");
+    if(!view.length){ list.innerHTML=`<div class="m-empty">No teams match that search.</div>`; $("#ms-more").innerHTML=""; return; }
+
+    const sg=(r,k,lbl)=>`<div class="sg ${k===focus?"hl":""}"><div class="k">${lbl}</div><div class="v">${fmt(r[k])}${isPct(k)?"%":""}</div></div>`;
+    list.innerHTML = view.map((r,i)=>{
+      const pct=Math.min(100,Math.max(4,(Math.abs(val(r,focus))/maxAbs)*100));
+      const open=r.code===openCode, sel=r.code===selCode;
+      return `<div class="m-card${open?" open":""}${sel?" sel":""}" data-code="${r.code}">
+        <div class="m-row" data-toggle="${r.code}">
+          <div class="m-rank ${i<3?"top":""}">${i+1}</div>
+          <div class="m-flag">${r.flag||"🏳️"}</div>
+          <div class="m-id">
+            <div class="m-name">${esc(r.name)}</div>
+            <div class="m-meta"><span>Group ${esc(r.group)}</span><span class="dot-sep">·</span>
+              <span><b style="color:var(--txt)">${fmt(r.wins)}</b>W ${fmt(r.draws)}D ${fmt(r.losses)}L</span></div>
+          </div>
+          <div class="m-statend">
+            <div class="m-bigval${lower?" lower":""}">${fmt(r[focus])}${suffix(focus)}</div>
+            <div class="m-statlbl">${labelMap[focus]}</div>
+          </div>
+          <div class="m-chev">▶</div>
+        </div>
+        <div class="m-barrow"><div class="m-bar"><i class="${lower?"lower":""}" style="width:${pct}%"></i></div></div>
+        <div class="m-detail">
+          <div class="m-statgrid">
+            ${sg(r,"matches_played","Played")}${sg(r,"wins","Wins")}${sg(r,"losses","Losses")}
+            ${sg(r,"goals_scored","GF")}${sg(r,"goals_conceded","GA")}${sg(r,"goal_difference","GD")}
+            ${sg(r,"points_per_game","PPG")}${sg(r,"xg_for_avg_overall","xG/m")}${sg(r,"clean_sheets","CS")}
+            ${sg(r,"average_possession","Poss")}${sg(r,"win_percentage","Win%")}${sg(r,"cards_total","Cards")}
+          </div>
+          <div class="m-detail-actions">
+            <a class="btn lime sm" href="#/country/${r.code}">Open ${esc(r.code)} team page →</a>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll("[data-toggle]").forEach(row=>row.addEventListener("click",()=>{
+      const c=row.dataset.toggle; openCode = openCode===c?null:c; selCode=c; draw();
+    }));
+
+    const more=$("#ms-more");
+    if(all.length>limit){
+      more.innerHTML=`<button class="btn" id="ms-morebtn">Show more · ${limit} of ${all.length}</button>`;
+      $("#ms-morebtn").addEventListener("click",()=>{limit+=16;draw();});
+    } else if(all.length>16){
+      more.innerHTML=`<button class="btn" id="ms-lessbtn">Show fewer</button>`;
+      $("#ms-lessbtn").addEventListener("click",()=>{limit=16;draw();window.scrollTo({top:0,behavior:"smooth"});});
+    } else { more.innerHTML=""; }
+  };
+
+  $("#ms-rail").querySelectorAll(".m-chip").forEach(ch=>ch.addEventListener("click",()=>{
+    focus=ch.dataset.focus; dir=dirMap[focus]||-1; limit=16;
+    $("#ms-rail").querySelectorAll(".m-chip").forEach(c=>c.classList.toggle("on",c===ch));
+    ch.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"});
+    draw();
+  }));
+  $("#ms-sort").addEventListener("click",()=>{dir*=-1;draw();});
+
+  $("#ms-filter").addEventListener("click",()=>{
+    openSheet(`
+      <h3>Filter teams</h3>
+      <div class="m-field">
+        <label>Search team, code or group</label>
+        <input type="text" id="sf-q" placeholder="e.g. Brazil, BRA, or A" value="${esc(q)}">
+      </div>`,
+      (sheet,reset)=>{
+        if(reset){ q=""; }
+        else { q=(sheet.querySelector("#sf-q").value||"").toLowerCase().trim(); }
+        limit=16; draw();
+      });
+  });
 
   draw();
 }
