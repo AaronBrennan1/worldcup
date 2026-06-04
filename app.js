@@ -197,7 +197,6 @@ const injectGlobalDashboardStyles = () => {
     .m-podium .pod.g1{border-top:3px solid var(--gold)}
     .m-podium .pod.g2{border-top:3px solid #cdd3da}
     .m-podium .pod.g3{border-top:3px solid #cd7f32}
-    .m-podium .pod .medal{position:absolute;top:8px;right:9px;font-size:15px}
 
     /* ranked stat cards */
     .m-list{display:flex;flex-direction:column;gap:9px}
@@ -315,8 +314,8 @@ function home(){
   const tiles = [
     ["#/groups","Groups","All 12 groups · 48 nations, drawn Dec 2025.","01"],
     ["#/bracket","Knockout Predictor","Order the groups, pick the third-place qualifiers, predict every tie.","02"],
-    ["#/countries","Countries","Every qualified nation — tap through to its page.","03"],
-    ["#/players","Player Stats","Tournament leaderboards and advanced player matrix analytics.","04"],
+    ["#/countries","Countries","All 48 qualified nations.","03"],
+    ["#/players","Player Stats","Per-90 metrics and player analytics.","04"],
     ["#/stats","Team Stats","Attack, defence, xG and discipline rankings.","05"],
     ["#/odds","Betting Odds","Live odds feed.","06","soon"],
     ["#/fantasy","Fantasy Zone","Build your XI and play.","07","soon"],
@@ -325,14 +324,13 @@ function home(){
   <section class="hero">
     <div class="kicker">USA · Canada · Mexico — 11 Jun → 19 Jul 2026</div>
     <h1>WORLD<br><span class="a">CUP</span> <span class="b">26</span></h1>
-    <p>The first 48-team World Cup. Twelve groups, a new Round of 32, and 104 matches across three nations. Your hub for groups, the bracket, every country, and the numbers behind them.</p>
+    <p>12 groups. A new Round of 32. 104 matches across three nations.</p>
     <a class="btn lime" href="#/groups">Explore the groups →</a>
     <a class="btn" href="#/bracket">See the bracket</a>
     <div class="meta">
       <div><b>${s.total_teams}</b><span>Teams</span></div>
       <div><b>${s.total_groups}</b><span>Groups</span></div>
       <div><b>104</b><span>Matches</span></div>
-      <div><b>${s.debut_nations.length}</b><span>Debutants</span></div>
       <div><b>3</b><span>Hosts</span></div>
     </div>
   </section>
@@ -354,7 +352,6 @@ function teamRow(code){
     <span class="fl">${t.flag}</span>
     <span class="nm">${esc(t.name)}
       ${t.host?'<span class="badge-h">Host</span>':""}
-      ${t.debut?'<span class="badge-d">Debut</span>':""}
     </span>
   </a>`;
 }
@@ -362,7 +359,7 @@ function groups(){
   app.innerHTML = `
     <div class="kicker">The Draw</div>
     <div class="sec-h"><h1>Groups</h1><span class="pill">12 groups · 4 per group</span></div>
-    <p class="muted" style="max-width:620px;margin-bottom:22px">Group winners and runners-up advance automatically; the eight best third-placed teams join them in the Round of 32. Tap any nation for its full page.</p>
+    <p class="muted" style="max-width:620px;margin-bottom:22px">Group winners and runners-up advance automatically; the eight best third-placed teams join them in the Round of 32.</p>
     <div class="grid-groups">
       ${Object.entries(D.groups).map(([g,codes])=>`
         <div class="card gcard">
@@ -393,7 +390,7 @@ function countries(){
         <span class="gtag">${t.group}</span>
         <div class="fl">${t.flag}</div>
         <div class="cn">${esc(t.name)}</div>
-        <div class="cm">${t.host?"Host":""}${t.host&&t.debut?" · ":""}${t.debut?"Debut":""}</div>
+        <div class="cm">${t.host?"Host":""}</div>
       </a>`).join("") : `<div class="empty">No nations match.</div>`;
   };
   $("#csearch").addEventListener("input",e=>{q=e.target.value;draw()});
@@ -425,7 +422,6 @@ function country(rest){
     qual = `<div class="card panel">
       <h3>Tournament Stats</h3>
       ${recHtml}
-      <p class="muted" style="font-size:13px;margin:0 0 14px">${s.matches_played||0} matches played.</p>
       <div class="statgrid">
         ${statBlock("Played",s.matches_played)}
         ${statBlock("Points/Game",s.points_per_game)}
@@ -442,10 +438,10 @@ function country(rest){
       </div></div>`;
   } else if(t.host){
     qual = `<div class="card panel"><h3>Tournament Stats</h3>
-      <div class="empty">${esc(t.name)} qualified automatically as a <b>host nation</b>. Live tournament data matrix records will stream here once the World Cup opens.</div></div>`;
+      <div class="empty">${esc(t.name)} qualified as a host nation. Data will populate once the tournament begins.</div></div>`;
   } else {
     qual = `<div class="card panel"><h3>Tournament Stats</h3>
-      <div class="empty">No metrics dataset available for ${esc(t.name)} yet.</div></div>`;
+      <div class="empty">No data available for ${esc(t.name)}.</div></div>`;
   }
 
   // group panel
@@ -461,7 +457,7 @@ function country(rest){
   if(t.xi && t.xi.length){
     lineup = `<div class="card panel"><div class="lineup-head"><h3>Expected Lineup</h3>
       ${t.formation?`<span class="formation-pill">${esc(t.formation)}</span>`:""}</div>
-      <p class="muted" style="font-size:12.5px;margin:-4px 0 14px">Probable first-choice XI inferred from tournament games started, minutes and ratings — shape (${esc(t.formation||"")}) reflects baseline strategy configurations.</p>
+      <p class="muted" style="font-size:12.5px;margin:-4px 0 14px">Based on tournament appearances, minutes and ratings.</p>
       ${pitch(t.xi, t.name)}
       <h3 style="margin-top:22px;font-size:16px">Bench</h3>
       <div class="statgrid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
@@ -470,15 +466,15 @@ function country(rest){
       </div></div>`;
   } else {
     const why = t.host
-      ? `${esc(t.name)} qualified automatically as a tournament host — an expected XI roster matrix will be appended with live opening round metrics.`
-      : `No data profiles available for ${esc(t.name)} yet.`;
+      ? `No lineup data available for ${esc(t.name)}.`
+      : `No data available for ${esc(t.name)}.`;
     lineup = `<div class="card panel"><h3>Expected Lineup</h3><div class="empty">${why}</div></div>`;
   }
 
   // squad table
   let squad = "";
   if(t.squad && t.squad.length){
-    squad = `<div class="card panel"><h3>Squad — Performance Minutes</h3>
+    squad = `<div class="card panel"><h3>Squad</h3>
       <div class="tbl-wrap"><table class="dt" id="sqt">
       <thead><tr>
         <th data-k="name" data-t="s">Player</th><th data-k="pos" data-t="s">Pos</th>
@@ -490,7 +486,7 @@ function country(rest){
   }
 
   const histNote = `<div class="card panel"><h3>Previous Games</h3>
-    <div class="empty">Match-by-match results aren't in the current dataset. This panel will fill with ${esc(t.name)}'s fixtures &amp; World Cup live history feed once match day begins.</div></div>`;
+    <div class="empty">Match history will be available once the tournament begins.</div></div>`;
 
   app.innerHTML = `
     <div class="crumbs"><a href="#/countries">Countries</a> · Group ${t.group}</div>
@@ -501,7 +497,6 @@ function country(rest){
         <div class="sub">
           <span class="pill">Group ${t.group}</span>
           ${t.host?'<span class="pill" style="border-color:var(--lime);color:var(--lime)">Host nation</span>':""}
-          ${t.debut?'<span class="pill" style="border-color:var(--mag);color:var(--mag)">World Cup debut</span>':""}
         </div>
       </div>
     </div>
@@ -586,7 +581,7 @@ function players(){
         <div class="lead-copy">
           <div class="kicker">Player Statistics</div>
           <div class="sec-h"><h1>Player Stats</h1><span class="pill" id="ptotal"></span></div>
-          <p>Every metric is per-90-minutes unless marked as a total, so players are compared on equal footing. Use the chart to spot the standout performers, then read the full table below. Click any player to highlight them everywhere.</p>
+          <p>Per-90 metrics unless marked as a total. Click any player to highlight them across the chart and table.</p>
         </div>
       </div>
 
@@ -636,7 +631,7 @@ function players(){
             <span><i style="background:var(--mag)"></i>Selected</span>
             <span id="scount"></span>
           </span>
-          <span class="hint">Dashed lines mark the median of the players shown · hover a dot for detail</span>
+          <span class="hint">Dashed lines mark the median · hover for detail</span>
         </div>
         <div class="chart-foot" style="margin-top:4px"><span class="sel-note" id="selinfo"></span></div>
       </div>
@@ -715,7 +710,7 @@ function players(){
     </svg>`;
 
     const totalQ = valid.length;
-    $("#scount").textContent = `Showing the top ${shown.length} of ${totalQ} qualifying players, ranked by ${PMLABEL[ay]}.`;
+    $("#scount").textContent = `Top ${shown.length} of ${totalQ} players by ${PMLABEL[ay]}.`;
 
     const svg=$("#scsvg"), tip=$("#tip",svg), tbg=$("#tipbg",svg), ttx=$("#tiptx",svg);
     svg.querySelectorAll(".dot").forEach(c=>{
@@ -763,17 +758,17 @@ function players(){
         <td class="num ${sortK==="kp90"?"colk":""}">${fmtN(p.kp90)}</td>
         <td class="num ${sortK==="tk90"?"colk":""}">${fmtN(p.tk90)}</td>
         <td class="num" style="font-weight:800;color:#fff">${fmtN(p.rt)}</td></tr>`;
-    }).join("") || `<tr><td colspan="15" class="muted" style="text-align:center;padding:34px">No players match these filters — try lowering the minimum minutes.</td></tr>`;
+    }).join("") || `<tr><td colspan="15" class="muted" style="text-align:center;padding:34px">No players match — try lowering the minimum minutes.</td></tr>`;
 
     const foot=$("#ptfoot");
     if(!rows.length){ foot.innerHTML=""; }
     else if(rows.length>tableLimit){
-      foot.innerHTML=`<span>Showing top <b>${tableLimit}</b> of <b>${rows.length}</b> players, sorted by <b>${PMLABEL[sortK]||sortK}</b>.</span>
-        <span><button class="btn sm" id="moreBtn">Show 25 more</button> <button class="btn lime sm" id="allBtn">Show all</button></span>`;
+      foot.innerHTML=`<span><b>${tableLimit}</b> of <b>${rows.length}</b> players · ${PMLABEL[sortK]||sortK}</span>
+        <span><button class="btn sm" id="moreBtn">Show more</button> <button class="btn lime sm" id="allBtn">Show all</button></span>`;
       $("#moreBtn").addEventListener("click",()=>{tableLimit+=25;renderTable();});
       $("#allBtn").addEventListener("click",()=>{tableLimit=rows.length;renderTable();});
     } else {
-      foot.innerHTML=`<span>Showing all <b>${rows.length}</b> players, sorted by <b>${PMLABEL[sortK]||sortK}</b>.</span>
+      foot.innerHTML=`<span>All <b>${rows.length}</b> players · ${PMLABEL[sortK]||sortK}</span>
         ${rows.length>25?`<button class="btn sm" id="lessBtn">Show fewer</button>`:""}`;
       const lb=$("#lessBtn"); if(lb) lb.addEventListener("click",()=>{tableLimit=25;renderTable();});
     }
@@ -790,7 +785,7 @@ function players(){
     $("#chart-title").textContent = `${PMLABEL[ay]} vs ${PMLABEL[ax]}`;
     $("#ptotal").textContent = `${filtered().length} players shown`;
     $("#selinfo").innerHTML = selName
-      ? `Highlighting <b>${esc(selName)}</b> in the chart and table — click again to clear.`
+      ? `Highlighting <b>${esc(selName)}</b> — click to clear.`
       : "";
   };
 
@@ -901,7 +896,7 @@ function playersMobile(){
 
     const list=$("#m-list");
     if(!view.length){
-      list.innerHTML=`<div class="m-empty">No players match these filters.<br>Try lowering the minimum minutes.</div>`;
+      list.innerHTML=`<div class="m-empty">No players match — try lowering the minimum minutes.</div>`;
       $("#m-more").innerHTML=""; return;
     }
     list.innerHTML = view.map((p,i)=>{
@@ -934,7 +929,7 @@ function playersMobile(){
             ${sg("pasc","Pass%")}${sg("rt","Rating")}${sg("age","Age")}
           </div>
           <div class="m-detail-actions">
-            <button class="btn lime sm" data-select="${esc(p.name)}">${sel?"Clear highlight":"Highlight player"}</button>
+            <button class="btn lime sm" data-select="${esc(p.name)}">${sel?"Clear":"Highlight"}</button>
           </div>
         </div>
       </div>`;
@@ -1042,15 +1037,13 @@ function stats(){
         <div class="lead-copy">
           <div class="kicker">Team Statistics</div>
           <div class="sec-h"><h1>Team Stats</h1><span class="pill">${cs.length} teams</span></div>
-          <p>Tournament performance for every nation. Choose a metric to rank by — the podium, chart and table all update together. Every team appears on the chart; click any team to highlight it, or tap a name to open its page.</p>
+          <p>Tournament performance for every nation. Choose a metric to rank by — the chart and table update together.</p>
         </div>
         <div class="ctrl" style="min-width:220px">
           <label>Rank teams by</label>
           <select id="metric">${metrics.map(([k,l])=>`<option value="${k}"${k===sortK?" selected":""}>${l}</option>`).join("")}</select>
         </div>
       </div>
-
-      <div class="podium-deck" id="podium"></div>
 
       <div class="chart-card">
         <div class="chart-head">
@@ -1069,7 +1062,7 @@ function stats(){
             <span><i style="background:var(--mag)"></i>Selected</span>
             <span id="tscount"></span>
           </span>
-          <span class="hint">Labels are 3-letter team codes · dashed lines mark the median · hover for full detail</span>
+          <span class="hint">3-letter codes · dashed lines mark the median · hover for detail</span>
         </div>
       </div>
 
@@ -1094,7 +1087,7 @@ function stats(){
             <tbody></tbody>
           </table>
         </div>
-        <div class="table-foot"><span id="ttnote"></span><span class="hint">Click a column header to sort · the highlighted column is the active ranking metric</span></div>
+        <div class="table-foot"><span id="ttnote"></span><span class="hint">Click a column header to sort</span></div>
       </div>
     </div>`;
 
@@ -1168,22 +1161,6 @@ function stats(){
     const higherBetter = dirMap[sortK]===-1;
     const label = labelMap[sortK];
 
-    // podium — the three best teams for the chosen metric
-    const medals=["🥇","🥈","🥉"], cls=["p1","p2","p3"];
-    $("#podium").innerHTML = rows.slice(0,3).map((t,i)=>`
-      <div class="podium-card ${cls[i]}" data-code="${t.code}" style="cursor:pointer">
-        <div class="medal">${medals[i]}</div>
-        <div class="pflag">${t.flag||""}</div>
-        <div class="pname">${esc(t.name)}</div>
-        <div class="pgroup">Group ${esc(t.group)}</div>
-        <span class="pval">${fmt(t[sortK])}${sortK==="average_possession"||sortK==="win_percentage"?"%":""}</span>
-        <span class="plabel">${esc(label)} ${higherBetter?"(higher is better)":"(lower is better)"}</span>
-        <div class="prec">P${fmt(t.matches_played)} · <b>${fmt(t.wins)}W</b> ${fmt(t.draws)}D ${fmt(t.losses)}L</div>
-      </div>`).join("");
-    $("#podium").querySelectorAll(".podium-card").forEach(el=>el.addEventListener("click",()=>{
-      selCode = selCode===el.dataset.code?null:el.dataset.code; draw();
-    }));
-
     drawTeamScatter(rows);
 
     // magnitude bar for the active metric (lime = higher-better, pink = lower-better)
@@ -1219,7 +1196,7 @@ function stats(){
 
     document.querySelectorAll("#tt th[data-k]").forEach(th=>th.classList.toggle("sortk",th.dataset.k===sortK));
     $("#t-chart-title").textContent = `${labelMap[ay]} vs ${labelMap[ax]}`;
-    $("#ttnote").innerHTML = `Ranked by <b>${esc(label)}</b> ${higherBetter?"(higher is better)":"(lower is better)"}.${selCode?` Highlighting <b>${esc(byCode(selCode)?.name||selCode)}</b>.`:""}`;
+    $("#ttnote").innerHTML = `Ranked by <b>${esc(label)}</b>.${selCode?` Highlighting <b>${esc(byCode(selCode)?.name||selCode)}</b>.`:""}`;
   };
 
   $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1;draw();});
@@ -1253,7 +1230,7 @@ function statsMobile(){
       <div class="m-hero">
         <div class="kicker">Team Statistics</div>
         <h1>Team Stats</h1>
-        <p class="m-sub">Tournament performance for every nation. Pick a metric to rank by — podium and cards update together. Tap a team for the full line.</p>
+        <p class="m-sub">Tournament performance for every nation. Pick a metric to rank by.</p>
         <span class="m-count" id="ms-count"></span>
       </div>
 
@@ -1295,10 +1272,9 @@ function statsMobile(){
     $("#ms-fbadge").innerHTML = filt>0 ? `<span class="dotbadge"></span>` : "";
 
     // podium
-    const medals=["🥇","🥈","🥉"], gcls=["g1","g2","g3"];
+    const gcls=["g1","g2","g3"];
     $("#ms-podium").innerHTML = best.map((t,i)=>`
       <div class="pod ${gcls[i]}" data-code="${t.code}">
-        <div class="medal">${medals[i]}</div>
         <div class="rk">#${i+1}</div>
         <div class="fl">${t.flag||"🏳️"}</div>
         <div class="nm">${esc(t.code)}</div>
@@ -1344,7 +1320,7 @@ function statsMobile(){
             ${sg(r,"average_possession","Poss")}${sg(r,"win_percentage","Win%")}${sg(r,"cards_total","Cards")}
           </div>
           <div class="m-detail-actions">
-            <a class="btn lime sm" href="#/country/${r.code}">Open ${esc(r.code)} team page →</a>
+            <a class="btn lime sm" href="#/country/${r.code}">${esc(r.code)} →</a>
           </div>
         </div>
       </div>`;
@@ -1410,7 +1386,7 @@ function defaultPred(){
 function bracket(){ 
   if(!SCEN && window.WC_SCENARIOS){ SCEN=window.WC_SCENARIOS; }
   if(SCEN){ if(!SCENMAP) buildScenMap(); if(!PRED) PRED=defaultPred(); renderPredictor(); return; }
-  app.innerHTML = `<div class="kicker">Predictor</div><div class="sec-h"><h1>World Cup Tournament Predictor</h1></div><div class="empty" id="bk">Loading tournament scenarios engine matrix…</div>`;
+  app.innerHTML = `<div class="kicker">Predictor</div><div class="sec-h"><h1>Tournament Predictor</h1></div><div class="empty" id="bk">Loading…</div>`;
   fetch("scenarios.json").then(r=>r.json()).then(j=>{SCEN=j;buildScenMap();PRED=PRED||defaultPred();renderPredictor();})
     .catch(()=>{$("#bk").innerHTML=`<div class="empty">Couldn't load scenarios.json (works once served over http / on GitHub Pages).</div>`;});
 }
@@ -1470,9 +1446,9 @@ function renderPredictor(){
   const champ = winnerCode("M104");
   app.innerHTML = `
     <div class="kicker">Predictor</div>
-    <div class="sec-h"><h1>World Cup Tournament Predictor</h1>
-      ${champ?`<span class="pill champ-pill">${byCode(champ).flag} ${esc(byCode(champ).name)} — your champion</span>`:""}</div>
-    <p class="muted note">Favourites are pre-filled at every stage from a power rating (consensus strength blended with form) — change anything you like. Order each group, choose the eight third-placed teams that advance, then click your winner in every knockout tie.</p>
+    <div class="sec-h"><h1>Tournament Predictor</h1>
+      ${champ?`<span class="pill champ-pill">${byCode(champ).flag} ${esc(byCode(champ).name)}</span>`:""}</div>
+    <p class="muted note">Favourites are pre-filled by power rating. Reorder groups, select the eight advancing third-placed teams, then pick your winner in each knockout tie.</p>
     <div class="steps">
       ${[["1","Group stage"],["2","Third place"],["3","Knockout"]].map(([n,l])=>
         `<button class="step ${PSTEP==n?"on":""}" data-s="${n}"><b>${n}</b>${l}</button>`).join("")}
@@ -1486,10 +1462,10 @@ function renderPredictor(){
 
 /* ---- Step 1: order the groups ---- */
 function stepGroups(){
-  const posLbl=["1 · Winner","2 · Runner-up","3 · Third place","4 · Eliminated"];
+  const posLbl=["Winner","Runner-up","3rd","Eliminated"];
   const posCls=["adv-win","adv-run","adv-third","adv-out"];
   
-  $("#pbody").innerHTML=`<p class="muted substep">Drag and drop teams to reorder each group. Top two always advance; third place may advance in the next step.</p>
+  $("#pbody").innerHTML=`<p class="muted substep">Drag to reorder. Top two advance automatically; third place may advance in step 2.</p>
   <div class="grid-groups">
     ${Object.keys(D.groups).map(g=>`
       <div class="card gcard pgcard" data-g="${g}">
@@ -1553,16 +1529,16 @@ function stepThird(){
   const n=PRED.third.size;
   const scen=n===8?activeScen():null;
   $("#pbody").innerHTML=`
-    <p class="muted substep">Eight of the twelve third-placed teams reach the Round of 32. Pick exactly eight — <b id="tcount" class="${n===8?"ok":"warn"}">${n} selected</b>.</p>
+    <p class="muted substep">Select exactly eight third-placed teams to advance — <b id="tcount" class="${n===8?"ok":"warn"}">${n} of 8 selected</b>.</p>
     <div class="third-grid">
       ${cands.map(({g,code})=>{const t=byCode(code);const on=PRED.third.has(g);
         return `<button class="third-chip ${on?"on":""}" data-g="${g}">
           <span class="fl">${t.flag}</span>
           <span class="tc-n">${esc(t.name)}</span>
-          <span class="tc-m">3rd · Group ${g} · pwr ${t.power}</span>
+          <span class="tc-m">3rd · Group ${g}</span>
           <span class="tc-x">${on?"✓":"+"}</span></button>`;}).join("")}
     </div>
-    <p class="muted substep" style="margin-top:14px">${scen?`Matched the official FIFA allocation for groups ${[...PRED.third].sort().join(", ")} (scenario #${scen.scenario_number} of 495). Head to the knockout step.`:n===8?`That combination wasn't found in the scenario set.`:`Select ${8-n>0?(8-n)+" more":""} to reach eight and lock the Round of 32.`}</p>`;
+    <p class="muted substep" style="margin-top:14px">${scen?`Groups ${[...PRED.third].sort().join(", ")} — scenario #${scen.scenario_number}. Proceed to the knockout round.`:n===8?`Combination not found in the scenario set.`:`Select ${8-n>0?(8-n)+" more":""} to lock the Round of 32.`}</p>`;
   $("#pbody").querySelectorAll(".third-chip").forEach(b=>b.addEventListener("click",()=>{
     const g=b.dataset.g;
     if(PRED.third.has(g)) PRED.third.delete(g);
@@ -1585,7 +1561,7 @@ window.currentMobileRound = window.currentMobileRound ?? 0;
 function stepKnockout(){
   const scen=activeScen();
   if(!scen){ 
-    $("#pbody").innerHTML=`<div class="empty">Pick exactly eight third-placed teams in step 2 to build the Round of 32. <button class="btn sm" id="toStep2">Go to step 2 →</button></div>`;
+    $("#pbody").innerHTML=`<div class="empty">Select eight third-placed teams in step 2 first. <button class="btn sm" id="toStep2">Step 2 →</button></div>`;
     $("#toStep2").addEventListener("click",()=>{PSTEP=2;renderPredictor();}); 
     return; 
   }
@@ -1593,7 +1569,7 @@ function stepKnockout(){
   function matchBox(id, label) {
     const {home,away,thirdPending}=participants(id);
     const w=winnerCode(id);
-    if(thirdPending) return `<div class="bmatch"><div class="mm">${label||id}</div><div class="empty-bteam">3rd place TBD</div></div>`;
+    if(thirdPending) return `<div class="bmatch"><div class="mm">${label||id}</div><div class="empty-bteam">TBD</div></div>`;
     return `<div class="bmatch"><div class="mm">${label||id}</div>
       ${teamPill(id,home,w&&w===home)}
       ${teamPill(id,away,w&&w===away)}</div>`;
@@ -1630,7 +1606,7 @@ function stepKnockout(){
   const finalsColActive = window.currentMobileRound === 4 ? 'active-round' : '';
 
   $("#pbody").innerHTML=`
-    <p class="muted substep">Click a team to send them through. Later rounds default to the favourite until you change them.</p>
+    <p class="muted substep">Click a team to advance them. Unfilled picks default to the higher-rated side.</p>
     
     ${tabsHtml}
     
@@ -1646,16 +1622,16 @@ function stepKnockout(){
           <div class="finals-showdown">
             
             <div class="finals-card gold">
-              <div class="finals-title">🏆 Grand Final<span>Gold & Silver</span></div>
+              <div class="finals-title">Final<span>Match 104 · MetLife Stadium</span></div>
               <div class="pred-bracket">
-                ${matchBox("M104", "MATCH 104 · METLIFE STADIUM")}
+                ${matchBox("M104")}
               </div>
             </div>
 
             <div class="finals-card bronze">
-              <div class="finals-title">🥉 3rd Place Match<span>Bronze Medal</span></div>
+              <div class="finals-title">Third Place<span>Match 103 · Hard Rock Stadium</span></div>
               <div class="pred-bracket">
-                ${matchBox("M103", "MATCH 103 · HARD ROCK STADIUM")}
+                ${matchBox("M103")}
               </div>
             </div>
 
@@ -1664,7 +1640,7 @@ function stepKnockout(){
           ${champ ? `
             <div class="champ-box animated-glowing">
               <span>World Cup 2026 Champion</span>
-              <b>🎉 ${esc(byCode(champ).name)} 🎉</b>
+              <b>${esc(byCode(champ).name)}</b>
             </div>
           ` : ''}
         </div>
@@ -1679,7 +1655,7 @@ function stepKnockout(){
     if(secH){
       const existing=secH.querySelector(".champ-pill");
       if(champ){
-        const pill=`<span class="pill champ-pill">${byCode(champ).flag} ${esc(byCode(champ).name)} — your champion</span>`;
+        const pill=`<span class="pill champ-pill">${byCode(champ).flag} ${esc(byCode(champ).name)}</span>`;
         if(existing) existing.outerHTML=pill; else secH.insertAdjacentHTML("beforeend",pill);
       } else if(existing){ existing.remove(); }
     }
@@ -1698,19 +1674,19 @@ function odds(){
   app.innerHTML = `<div class="crumbs"><a href="#/">Home</a></div>
     <div class="soon-hero"><div class="kicker" style="color:var(--gold)">Coming soon</div>
       <div class="big">ODDS</div>
-      <p>Live betting odds across the tournament — match markets, outright winner, group winners and top scorer — will stream in here once the tournament engine feed is connected.</p>
-      <a class="btn" href="#/stats" style="margin-top:22px">Meanwhile, browse team statistics standings →</a></div>`;
+      <p>Live betting markets across the tournament.</p>
+      <a class="btn" href="#/stats" style="margin-top:22px">Team statistics →</a></div>`;
 }
 function fantasy(){
   app.innerHTML = `<div class="crumbs"><a href="#/">Home</a></div>
     <div class="soon-hero"><div class="kicker" style="color:var(--gold)">Coming soon</div>
       <div class="big">FANTASY</div>
-      <p>Build your World Cup XI within a budget, pick a captain, and climb the global analytics leaderboard. The Fantasy Zone opens closer to kickoff.</p>
-      <a class="btn" href="#/players" style="margin-top:22px">Scout player metrics matrix now →</a></div>`;
+      <p>Build your World Cup XI, pick a captain, and compete on the leaderboard.</p>
+      <a class="btn" href="#/players" style="margin-top:22px">Player stats →</a></div>`;
 }
 function notfound(){
   app.innerHTML = `<div class="soon-hero"><div class="big" style="color:var(--mag)">404</div>
-    <p>That page wandered offside.</p><a class="btn lime" href="#/" style="margin-top:20px">Back home</a></div>`;
+    <p>Page not found.</p><a class="btn lime" href="#/" style="margin-top:20px">Back home</a></div>`;
 }
 
 /* ---------- utils: sortable tables ---------- */
