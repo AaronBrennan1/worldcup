@@ -338,6 +338,9 @@ table.dt .name{cursor:pointer}
 .prow:hover .drag-handle {
   color: var(--lime);
 }
+.drag-handle {
+     touch-action: none;  /* Prevents browser delay */
+   }
 
 /* ---- Responsive Bracket Tabs for Mobile ---- */
 .bracket-tabs {
