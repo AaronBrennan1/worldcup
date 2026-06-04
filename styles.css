@@ -204,3 +204,112 @@ table.dt .num{font-family:"Spline Sans Mono";text-align:right}
 .empty{padding:40px;text-align:center;color:var(--mut);border:1px dashed var(--line);border-radius:14px}
 footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut2);font-size:12.5px}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* ============================================================
+   v2 additions — formation, advanced players, predictor
+   ============================================================ */
+.lineup-head{display:flex;align-items:center;gap:12px}
+.formation-pill{font-family:"Spline Sans Mono";font-weight:700;font-size:12px;color:var(--ink);
+  background:var(--lime);padding:3px 10px;border-radius:7px;letter-spacing:.04em}
+
+/* ---- advanced players page ---- */
+.filters.pf{align-items:center}
+.minmin{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--mut);font-weight:700}
+.minmin label{text-transform:uppercase;letter-spacing:.05em}
+.minmin b{color:var(--lime);font-family:"Spline Sans Mono"}
+.minmin input[type=range]{accent-color:var(--lime);width:150px}
+.scatter-card{padding:16px 16px 12px}
+.scatter-axes{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:6px;font-size:11px;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:800}
+.scatter-axes select{background:var(--ink3);border:1px solid var(--line);color:var(--txt);
+  border-radius:8px;padding:6px 9px;font-size:12.5px;font-weight:700;margin-left:7px;text-transform:none;letter-spacing:0}
+.scatter-axes .legend{margin-left:auto;display:flex;gap:11px;flex-wrap:wrap;align-items:center}
+.scatter-axes .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.scatter-wrap{width:100%}
+.scatter-svg{width:100%;height:auto;display:block;touch-action:none}
+.scatter-svg .dot{cursor:pointer;transition:fill-opacity .12s}
+.scatter-svg .dot:hover{fill-opacity:.95}
+.scatter-svg .axis{stroke:var(--line);stroke-width:1}
+.scatter-svg .grid{stroke:var(--mut2);stroke-dasharray:3 4;stroke-width:1;opacity:.5}
+.scatter-svg .axt{fill:var(--mut);font-size:10px;font-family:"Spline Sans Mono"}
+.scatter-svg .axttl{fill:var(--txt);font-size:12px;font-weight:800;font-family:"Hanken Grotesque";text-transform:uppercase;letter-spacing:.06em}
+.scatter-svg #tiptx{fill:var(--txt);font-size:12px;font-family:"Hanken Grotesque"}
+.scatter-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:6px;font-size:12px;flex-wrap:wrap}
+.scatter-foot .selinfo{color:var(--lime);font-weight:700}
+table.dt.adv{min-width:920px;font-size:12.5px}
+table.dt.adv td,table.dt.adv th{padding:8px 9px}
+table.dt.adv td.hl{color:var(--lime);font-weight:700}
+table.dt.adv th.active{color:var(--lime)}
+table.dt.adv tr.selrow td{background:rgba(200,255,0,.12)}
+table.dt .name{cursor:pointer}
+
+/* ---- predictor steps ---- */
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 22px}
+.step{display:flex;align-items:center;gap:8px;background:var(--ink2);border:1px solid var(--line);
+  color:var(--mut);border-radius:11px;padding:9px 15px;font-size:13px;font-weight:800;cursor:pointer;
+  letter-spacing:.02em;transition:.15s;text-transform:uppercase}
+.step b{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;
+  background:var(--ink3);color:var(--mut);font-size:12px}
+.step:hover{color:var(--txt);border-color:var(--mut2)}
+.step.on{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.step.on b{background:var(--ink);color:var(--lime)}
+.step.reset{margin-left:auto;text-transform:none;color:var(--mut)}
+.step.reset:hover{color:var(--mag);border-color:var(--mag)}
+.champ-pill{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.substep{font-size:13px;max-width:680px;margin:0 0 16px}
+.substep .ok{color:var(--lime)} .substep .warn{color:var(--gold)}
+
+/* step 1: group ordering */
+.pgcard .prow{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid var(--ink3)}
+.pgcard .prow:first-of-type{border-top:none}
+.prow .ppos{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mut2);
+  width:74px;flex:none}
+.prow .fl{font-size:18px}
+.prow .nm{font-weight:700;font-size:13.5px;flex:1;display:flex;align-items:center;gap:7px}
+.prow .pwr{font-family:"Spline Sans Mono";font-size:10px;color:var(--mut);background:var(--ink3);
+  padding:1px 6px;border-radius:5px}
+.prow .ord{display:flex;flex-direction:column;gap:2px}
+.prow .ob{background:var(--ink3);border:1px solid var(--line);color:var(--txt);border-radius:5px;
+  width:24px;height:17px;line-height:1;font-size:9px;cursor:pointer;padding:0}
+.prow .ob:hover:not(:disabled){background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.prow .ob:disabled{opacity:.25;cursor:default}
+.prow.adv-win{background:rgba(57,224,127,.08)} .prow.adv-win .ppos{color:var(--conf-CAF)}
+.prow.adv-run{background:rgba(51,224,255,.06)} .prow.adv-run .ppos{color:var(--cyan)}
+.prow.adv-third .ppos{color:var(--gold)}
+.prow.adv-out{opacity:.5}
+
+/* step 2: third-place chips */
+.third-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.third-chip{display:flex;align-items:center;gap:10px;text-align:left;background:var(--ink2);
+  border:1px solid var(--line);border-radius:11px;padding:11px 13px;cursor:pointer;color:var(--txt);transition:.14s}
+.third-chip:hover{border-color:var(--mut2)}
+.third-chip .fl{font-size:21px;flex:none}
+.third-chip .tc-n{font-weight:800;font-size:14px}
+.third-chip .tc-m{font-size:10.5px;color:var(--mut);display:block}
+.third-chip>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:1px}
+.third-chip .tc-x{font-size:15px;color:var(--mut2);font-weight:800;flex:none}
+.third-chip.on{border-color:var(--lime);background:rgba(200,255,0,.10)}
+.third-chip.on .tc-x{color:var(--lime)}
+
+/* step 3: interactive bracket */
+.pred-bracket .bmatch{background:var(--ink2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.pred-bracket .bmatch .mm{font-size:9px;color:var(--mut2);padding:3px 9px;background:var(--ink3);letter-spacing:.05em}
+.bteam{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;
+  border-top:1px solid var(--ink3);color:var(--mut);font-size:12.5px;font-weight:700;
+  padding:8px 10px;cursor:pointer;text-align:left;transition:.12s;font-family:inherit}
+.bteam:first-of-type{border-top:none}
+.bteam .fl{font-size:15px;flex:none}
+.bteam .bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bteam:hover{background:var(--ink3);color:var(--txt)}
+.bteam.win{color:var(--ink);background:var(--lime)}
+.bteam.win .bn{font-weight:800}
+.empty-bteam{padding:9px 10px;color:var(--mut2);font-size:12px;font-style:italic}
+.champ-box{margin-top:12px;background:linear-gradient(135deg,rgba(255,194,75,.18),rgba(255,45,135,.10));
+  border:1px solid var(--gold);border-radius:11px;padding:14px;text-align:center;font-size:18px}
+.champ-box b{font-family:"Anton";font-weight:400;font-size:22px;display:block;text-transform:uppercase}
+.champ-box span{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.btn.sm{padding:7px 13px;font-size:13px;margin-left:8px}
+@media(max-width:560px){
+  .prow .ppos{width:20px;overflow:hidden;text-indent:-999px}
+  .prow .ppos::after{content:attr(data-n)}
+}

@@ -125,6 +125,10 @@ def find_team_row(fkey, common):
             return r
     return None
 
+def per90(total, minutes):
+    if total is None or not minutes: return None
+    return round(total / (minutes/90.0), 2)
+
 def player_squad(pkey, teamkey):
     # In these international datasets the "Current Club" field is the NATIONAL TEAM
     # the player actually represented in qualifying (the real squad), while
@@ -132,42 +136,84 @@ def player_squad(pkey, teamkey):
     rows = [r for r in player_rows[pkey] if r.get("Current Club","").strip() == teamkey]
     out = []
     for r in rows:
+        mins = num(r.get("minutes_played_overall")) or 0
+        xg = num(r.get("xg_total_overall"))
         out.append({
             "name": r.get("full_name","").strip(),
             "age": num(r.get("age")),
             "pos": r.get("position","").strip(),
             "nat": r.get("nationality","").strip(),
-            "min": num(r.get("minutes_played_overall")) or 0,
+            "min": mins,
             "app": num(r.get("appearances_overall")) or 0,
+            "gs":  num(r.get("games_started")) or 0,
             "g": num(r.get("goals_overall")) or 0,
             "a": num(r.get("assists_overall")) or 0,
             "yc": num(r.get("yellow_cards_overall")) or 0,
             "rc": num(r.get("red_cards_overall")) or 0,
             "cs": num(r.get("clean_sheets_overall")) or 0,
+            "rt": num(r.get("average_rating_overall")),
+            "xg": xg,
+            "xg90": per90(xg, mins),
+            "g90":  num(r.get("goals_per_90_overall")),
+            "a90":  num(r.get("assists_per_90_overall")),
+            "ga90": num(r.get("goals_involved_per_90_overall")),
+            "sh90": num(r.get("shots_per_90_overall")),
+            "sot90":num(r.get("shots_on_target_per_90_overall")),
+            "kp90": num(r.get("key_passes_per_90_overall")),
+            "cc90": num(r.get("chances_created_per_90_overall")),
+            "tk90": num(r.get("tackles_per_90_overall")),
+            "int90":num(r.get("interceptions_per_90_overall")),
+            "drb90":num(r.get("dribbles_successful_per_90_overall")),
+            "pas90":num(r.get("passes_per_90_overall")),
+            "pasc": num(r.get("pass_completion_rate_overall")),
+            "sav90":num(r.get("saves_per_90_overall")),
+            "mv":   num(r.get("market_value")),
         })
-    out.sort(key=lambda p: (p["min"], p["app"]), reverse=True)
+    # default sort: actual starters first (games started, then minutes)
+    out.sort(key=lambda p: (p["gs"], p["min"], p["app"]), reverse=True)
     return out
 
 POS_ORDER = {"Goalkeeper":0,"Defender":1,"Midfielder":2,"Forward":3}
 
+def starter_score(p):
+    """How likely the player is a first-choice starter, from qualifying usage + quality."""
+    s = (p["gs"] or 0)*3.0 + (p["app"] or 0)*1.0 + (p["min"] or 0)/90.0
+    if p.get("rt"): s += (p["rt"] - 6.5) * 2.0   # rating nudge around a 6.5 baseline
+    return s
+
 def probable_xi(squad):
-    """Heuristic 4-3-3 from minutes leaders by position."""
+    """Pick the most likely first-choice XI from games started + minutes, then arrange
+    into the formation that the selected outfield players actually imply (clamped to a
+    realistic shape). Returns (xi, bench, formation_string)."""
+    ranked = sorted(squad, key=starter_score, reverse=True)
+    gks = [p for p in ranked if p["pos"]=="Goalkeeper"]
+    out = [p for p in ranked if p["pos"]!="Goalkeeper"]
+    gk = gks[:1]
+    # take the 10 strongest outfield starters, then see what shape they form
+    top10 = out[:10]
+    d = sum(1 for p in top10 if p["pos"]=="Defender")
+    m = sum(1 for p in top10 if p["pos"]=="Midfielder")
+    f = sum(1 for p in top10 if p["pos"]=="Forward")
+    # clamp to a believable formation, rebalancing to exactly 10 outfielders
+    d = min(max(d,3),5); f = min(max(f,1),3); m = 10-d-f
+    if m < 2: m = 2; d = min(d, 10-m-f)
+    if d+m+f != 10: m = 10-d-f
+    need = {"Defender":d, "Midfielder":m, "Forward":f}
     by = defaultdict(list)
-    for p in squad:
-        by[p["pos"]].append(p)
-    need = [("Goalkeeper",1),("Defender",4),("Midfielder",3),("Forward",3)]
-    xi, used = [], set()
-    for pos, n in need:
-        for p in by.get(pos, [])[:n]:
+    for p in out: by[p["pos"]].append(p)
+    xi, used = list(gk), set(p["name"] for p in gk)
+    for pos in ("Defender","Midfielder","Forward"):
+        for p in by[pos][:need[pos]]:
             xi.append(p); used.add(p["name"])
-    # backfill to 11 from remaining by minutes
+    # backfill if a bucket was short
     if len(xi) < 11:
-        for p in squad:
+        for p in ranked:
             if p["name"] not in used:
                 xi.append(p); used.add(p["name"])
                 if len(xi) >= 11: break
-    bench = [p for p in squad if p["name"] not in used][:12]
-    return xi[:11], bench
+    bench = [p for p in ranked if p["name"] not in used][:7]
+    formation = f"{d}-{m}-{f}"
+    return xi[:11], bench, formation
 
 teams = {}
 all_players = []  # for global leaderboards (qualifiers)
@@ -196,13 +242,51 @@ for gid, gobj in groups["groups"].items():
             teamkey = common or nat  # Current Club value == team common_name (hosts use plain name)
             sq = player_squad(pkey, teamkey)
             entry["squad"] = sq[:30]
-            xi, bench = probable_xi(sq)
+            xi, bench, formation = probable_xi(sq)
             entry["xi"] = xi
             entry["bench"] = bench
+            entry["formation"] = formation
             for p in sq:
                 all_players.append({**p, "team": t["name"], "code": code,
                                     "flag": entry["flag"], "group": gid})
         teams[code] = entry
+
+# ---- team power ratings (drive the predictor's default group order & picks) ----
+# Consensus pre-tournament strength prior (0-100), blended with qualifying form.
+TIER = {
+ "ARG":96,"FRA":95,"ESP":94,"ENG":92,"BRA":90,"POR":89,"GER":88,"NED":86,
+ "BEL":82,"CRO":80,"URU":80,"COL":77,"MAR":80,"JPN":77,"SEN":75,"SUI":74,
+ "NOR":73,"USA":71,"MEX":69,"TUR":68,"ECU":67,"KOR":66,"CIV":66,"EGY":65,
+ "ALG":65,"AUT":64,"IRN":62,"CAN":61,"AUS":61,"GHA":60,"SWE":60,"SCO":59,
+ "TUN":58,"BIH":57,"CZE":57,"PAR":57,"COD":55,"RSA":53,"UZB":52,"KSA":52,
+ "PAN":51,"QAT":50,"IRQ":49,"JOR":47,"CPV":47,"NZL":45,"HAI":44,"CUW":42,
+}
+def _vals(key):
+    return [t["stats"][key] for t in teams.values() if t["stats"] and t["stats"].get(key) is not None]
+def _norm(v, lo, hi):
+    if v is None or hi==lo: return None
+    return max(0.0, min(1.0, (v-lo)/(hi-lo)))
+ppg_v, win_v = _vals("points_per_game"), _vals("win_percentage")
+gd_v = [t["stats"]["goal_difference"]/max(1,(t["stats"].get("matches_played") or 1))
+        for t in teams.values() if t["stats"] and t["stats"].get("goal_difference") is not None]
+ppg_lo,ppg_hi=min(ppg_v),max(ppg_v); win_lo,win_hi=min(win_v),max(win_v); gd_lo,gd_hi=min(gd_v),max(gd_v)
+for code,t in teams.items():
+    tier = TIER.get(code, 55)
+    st = t["stats"]
+    if st:
+        gdpm = (st.get("goal_difference") or 0)/max(1,(st.get("matches_played") or 1))
+        parts = [x for x in (_norm(st.get("points_per_game"),ppg_lo,ppg_hi),
+                             _norm(st.get("win_percentage"),win_lo,win_hi),
+                             _norm(gdpm,gd_lo,gd_hi)) if x is not None]
+        form = (sum(parts)/len(parts))*100 if parts else tier
+    else:
+        form = tier  # hosts: no qualifiers, lean on prior
+    # Tier prior dominates (keeps favourites on top); qualifying form is a light ±6 nudge,
+    # so a perfect record in a weak confederation can't leapfrog an established giant.
+    t["power"] = round(tier + (form - 50) * 0.12, 1)
+
+for cs in country_stats:
+    cs["power"] = teams[cs["code"]]["power"]
 
 # europe league summary
 eu_league = load_csv("international-wc-qualification-europe-league-2026-to-2026-stats.csv")

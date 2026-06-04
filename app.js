@@ -45,7 +45,7 @@ function home(){
   const s = D.meta.summary;
   const tiles = [
     ["#/groups","Groups","All 12 groups · 48 nations, drawn Dec 2025.","01"],
-    ["#/bracket","Knockout Bracket","Round of 32 through the Final in New York/NJ.","02"],
+    ["#/bracket","Knockout Predictor","Order the groups, pick the third-place qualifiers, predict every tie.","02"],
     ["#/countries","Countries","Every qualified nation — tap through to its page.","03"],
     ["#/players","Player Stats","Qualifying leaderboards. Live WC data lands later.","04"],
     ["#/stats","Team Stats","Attack, defence, xG and discipline rankings.","05"],
@@ -200,13 +200,14 @@ function country(rest){
   // lineup
   let lineup;
   if(t.xi && t.xi.length){
-    lineup = `<div class="card panel"><h3>Expected Lineup</h3>
-      <p class="muted" style="font-size:12.5px;margin:-6px 0 14px">Probable XI estimated from minutes played in qualifying (4-3-3). Real club affiliations arrive with live tournament data; for now each card shows position &amp; listed nationality.</p>
+    lineup = `<div class="card panel"><div class="lineup-head"><h3>Expected Lineup</h3>
+      ${t.formation?`<span class="formation-pill">${esc(t.formation)}</span>`:""}</div>
+      <p class="muted" style="font-size:12.5px;margin:-4px 0 14px">Probable first-choice XI inferred from games started, minutes and average match rating across qualifying — shape (${esc(t.formation||"")}) reflects how often each player started. Club sides aren't in the source, so cards show position, qualifying starts and listed nationality.</p>
       ${pitch(t.xi, t.name)}
       <h3 style="margin-top:22px;font-size:16px">Bench</h3>
-      <div class="statgrid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">
+      <div class="statgrid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
         ${t.bench.map(p=>`<div class="stat"><b style="font-size:14px;font-family:'Hanken Grotesque';font-weight:800">${esc(p.name)}</b>
-          <span>${esc(p.pos)}${p.nat&&p.nat!==t.name?" · "+esc(p.nat):""}</span></div>`).join("")||'<div class="muted">—</div>'}
+          <span>${esc(p.pos)}${p.gs?` · ${p.gs} starts`:""}${p.nat&&p.nat!==t.name?" · "+esc(p.nat):""}</span></div>`).join("")||'<div class="muted">—</div>'}
       </div></div>`;
   } else {
     const why = t.host
@@ -268,7 +269,7 @@ function pitch(xi, teamName){
     [rows.Defender, 33, false],
     [rows.Goalkeeper.concat(rows.Other), 9, true],
   ];
-  const sub = p => (p.nat && p.nat!==teamName) ? p.nat : (p.pos||"");
+  const sub = p => (p.nat && p.nat!==teamName) ? p.nat : (p.gs!=null ? p.gs+" starts" : (p.pos||""));
   const ppl = (p,gk)=>`<div class="pp ${gk?'gk':''}">
       <div class="dot">${esc((p.pos||'?')[0])}</div>
       <div class="pn">${esc(shortName(p.name))}</div>
@@ -284,56 +285,164 @@ function shortName(n){
   return parts[0][0]+". "+parts.slice(1).join(" ");
 }
 
-/* ---------- PLAYERS ---------- */
+/* ---------- PLAYERS (advanced analytics) ---------- */
+const PMETRICS = [
+  ["xg90","xG / 90"],["sh90","Shots / 90"],["sot90","Shots on T / 90"],
+  ["g90","Goals / 90"],["a90","Assists / 90"],["ga90","G+A / 90"],
+  ["kp90","Key passes / 90"],["cc90","Chances created / 90"],
+  ["tk90","Tackles / 90"],["int90","Interceptions / 90"],["drb90","Dribbles / 90"],
+  ["pas90","Passes / 90"],["pasc","Pass completion %"],["rt","Avg match rating"],
+  ["xg","xG (total)"],["g","Goals"],["a","Assists"],["min","Minutes"],["gs","Starts"],["age","Age"],
+];
+const PMLABEL = Object.fromEntries(PMETRICS);
+const fmtN = (v,d=2)=> v==null?"–":(typeof v==="number"? (Number.isInteger(v)?v:v.toFixed(d)) : v);
+
 function players(){
   app.innerHTML = `
-    <div class="kicker">Qualifying · all confederations w/ player data</div>
+    <div class="kicker">Qualifying analytics · all six confederations</div>
     <div class="sec-h"><h1>Player Stats</h1><span class="pill">${D.players.length} players</span></div>
-    <p class="muted note">Covers qualifying across all six confederations. Live World Cup match data will be added once the tournament kicks off. The three hosts (USA, Canada, Mexico) have no qualifiers, so they aren't listed here.</p>
-    <div class="filters" style="margin-top:16px">
+    <p class="muted note">Per-90 metrics from World Cup qualifying. Plot any two metrics to scout players, then dig into the table. Hosts (USA, Canada, Mexico) have no qualifiers so aren't included; some smaller federations report limited shot/market data.</p>
+
+    <div class="filters pf">
       <input id="psearch" placeholder="Search player or nationality…">
       <select id="ppos"><option value="">All positions</option>
         <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select>
+      <select id="pconf"><option value="">All confederations</option>${CONF.map(c=>`<option>${c}</option>`).join("")}</select>
       <select id="pteam"><option value="">All teams</option>
         ${teamsArr().filter(t=>t.squad.length).sort((a,b)=>a.name.localeCompare(b.name))
           .map(t=>`<option value="${t.code}">${esc(t.name)}</option>`).join("")}</select>
+      <span class="minmin"><label>Min minutes <b id="mmval">270</b></label>
+        <input type="range" id="pmin" min="0" max="900" step="90" value="270"></span>
     </div>
-    <div class="tbl-wrap"><table class="dt" id="pt">
+
+    <div class="card panel scatter-card">
+      <div class="scatter-axes">
+        <span>Y<select id="ay">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="xg90"?" selected":""}>${l}</option>`).join("")}</select></span>
+        <span>X<select id="ax">${PMETRICS.map(([k,l])=>`<option value="${k}"${k==="sh90"?" selected":""}>${l}</option>`).join("")}</select></span>
+        <span class="legend" id="plegend"></span>
+      </div>
+      <div id="scatter" class="scatter-wrap"></div>
+      <div class="scatter-foot"><span id="scount" class="muted"></span><span id="selinfo" class="selinfo"></span></div>
+    </div>
+
+    <div class="tbl-wrap"><table class="dt adv" id="pt">
       <thead><tr>
         <th data-k="name" data-t="s">Player</th><th data-k="team" data-t="s">Team</th>
-        <th data-k="pos" data-t="s">Pos</th><th data-k="nat" data-t="s">Nationality</th>
-        <th data-k="age" class="num">Age</th><th data-k="app" class="num">Apps</th>
-        <th data-k="min" class="num">Mins</th><th data-k="g" class="num">G</th>
-        <th data-k="a" class="num">A</th><th data-k="yc" class="num">YC</th>
-        <th data-k="rc" class="num">RC</th></tr></thead>
+        <th data-k="pos" data-t="s">Pos</th><th data-k="age" class="num">Age</th>
+        <th data-k="min" class="num">Min</th><th data-k="gs" class="num">St</th>
+        <th data-k="g" class="num">G</th><th data-k="a" class="num">A</th>
+        <th data-k="xg" class="num">xG</th><th data-k="xg90" class="num">xG/90</th>
+        <th data-k="sh90" class="num">Sh/90</th><th data-k="sot90" class="num">SoT/90</th>
+        <th data-k="kp90" class="num">KP/90</th><th data-k="tk90" class="num">Tk/90</th>
+        <th data-k="rt" class="num">Rating</th></tr></thead>
       <tbody></tbody></table></div>`;
-  let q="",pos="",team="";
+
+  let q="",pos="",team="",conf="",minMin=270;
+  let ax="sh90", ay="xg90";
+  let sortK="xg90", sortDir=-1, selCode=null;
   const base = D.players.slice();
-  const tbody = $("#pt tbody");
-  let sortK="g", sortDir=-1;
-  const draw=()=>{
-    let rows = base.filter(p=>
-      (!pos||p.pos===pos)&&(!team||p.code===team)&&
+
+  const filtered = ()=> base.filter(p=>
+      (!pos||p.pos===pos)&&(!team||p.code===team)&&(!conf||byCode(p.code).conf===conf)&&
+      (p.min||0)>=minMin &&
       ((p.name||"").toLowerCase().includes(q)||(p.nat||"").toLowerCase().includes(q)));
-    rows.sort((a,b)=>cmp(a[sortK],b[sortK])*sortDir);
-    rows = rows.slice(0,300);
-    tbody.innerHTML = rows.map(p=>`<tr>
+
+  // legend
+  $("#plegend").innerHTML = CONF.map(c=>`<i style="background:${confColor(c)}"></i>${c}`).join("");
+
+  const drawScatter = (rows)=>{
+    const pts = rows.filter(p=>p[ax]!=null && p[ay]!=null);
+    const W=820,H=460,pad={l:64,r:24,t:20,b:54};
+    const xs=pts.map(p=>p[ax]), ys=pts.map(p=>p[ay]);
+    const xmax=Math.max(0.0001,...xs), ymax=Math.max(0.0001,...ys);
+    const xmin=Math.min(0,...xs), ymin=Math.min(0,...ys);
+    const sx=v=>pad.l+(v-xmin)/(xmax-xmin||1)*(W-pad.l-pad.r);
+    const sy=v=>H-pad.b-(v-ymin)/(ymax-ymin||1)*(H-pad.t-pad.b);
+    const med=a=>{if(!a.length)return 0;const s=[...a].sort((m,n)=>m-n);return s[Math.floor(s.length/2)];};
+    const mx=med(xs), my=med(ys);
+    const rad=p=>3+Math.sqrt(Math.max(0,p.min||0))/7;
+    const ticks=(lo,hi,n=5)=>Array.from({length:n+1},(_,i)=>lo+(hi-lo)*i/n);
+    const dots=pts.map((p,i)=>{
+      const sel = p.name===selCode;
+      return `<circle class="dot${sel?" sel":""}" data-i="${i}" cx="${sx(p[ax]).toFixed(1)}" cy="${sy(p[ay]).toFixed(1)}"
+        r="${sel?rad(p)+2.5:rad(p).toFixed(1)}" fill="${confColor(byCode(p.code).conf)}"
+        fill-opacity="${sel?0.95:0.62}" stroke="${sel?"#fff":"none"}" stroke-width="${sel?2:0}"/>`;
+    }).join("");
+    const xlabels=ticks(xmin,xmax).map(v=>`<text class="axt" x="${sx(v)}" y="${H-pad.b+18}" text-anchor="middle">${(+v.toFixed(2))}</text>`).join("");
+    const ylabels=ticks(ymin,ymax).map(v=>`<text class="axt" x="${pad.l-10}" y="${sy(v)+4}" text-anchor="end">${(+v.toFixed(2))}</text>`).join("");
+    $("#scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="scatter-svg" id="scsvg">
+      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W-pad.r}" y2="${sy(my)}"/>
+      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H-pad.b}"/>
+      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}"/>
+      <line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}"/>
+      ${xlabels}${ylabels}
+      <text class="axttl" x="${pad.l+(W-pad.l-pad.r)/2}" y="${H-8}" text-anchor="middle">${esc(PMLABEL[ax])}</text>
+      <text class="axttl" transform="rotate(-90 16 ${pad.t+(H-pad.t-pad.b)/2})" x="16" y="${pad.t+(H-pad.t-pad.b)/2}" text-anchor="middle">${esc(PMLABEL[ay])}</text>
+      ${dots}
+      <g id="tip" style="display:none"><rect rx="6" id="tipbg" fill="#11141a" stroke="#2a2f3a"/><text id="tiptx"></text></g>
+    </svg>`;
+    $("#scount").textContent = `${pts.length} players plotted (of ${rows.length} matching · need both metrics)`;
+    const svg=$("#scsvg"), tip=$("#tip",svg), tbg=$("#tipbg",svg), ttx=$("#tiptx",svg);
+    svg.querySelectorAll(".dot").forEach(c=>{
+      c.addEventListener("mousemove",()=>{
+        const p=pts[+c.dataset.i];
+        ttx.innerHTML=`<tspan x="0" dy="0" style="font-weight:800">${esc(p.name)}</tspan>`+
+          `<tspan x="0" dy="15" fill="#9aa3b2">${esc(p.team)} · ${esc(p.pos)}</tspan>`+
+          `<tspan x="0" dy="15">${esc(PMLABEL[ay])}: ${fmtN(p[ay])}</tspan>`+
+          `<tspan x="0" dy="15">${esc(PMLABEL[ax])}: ${fmtN(p[ax])}</tspan>`;
+        const bb=ttx.getBBox?ttx.getBBox():{width:120,height:60};
+        let tx=+c.getAttribute("cx")+12, ty=+c.getAttribute("cy")-10;
+        if(tx+bb.width+16>820) tx=+c.getAttribute("cx")-bb.width-16;
+        if(ty<10) ty=12;
+        tip.setAttribute("transform",`translate(${tx},${ty})`);
+        ttx.setAttribute("x",8); ttx.setAttribute("y",16);
+        tbg.setAttribute("x",0); tbg.setAttribute("y",0);
+        tbg.setAttribute("width",bb.width+16); tbg.setAttribute("height",bb.height+12);
+        tip.style.display="block";
+      });
+      c.addEventListener("mouseleave",()=>tip.style.display="none");
+      c.addEventListener("click",()=>{ const p=pts[+c.dataset.i]; selCode=(selCode===p.name?null:p.name); refresh(); });
+    });
+  };
+
+  const renderTable=(rows)=>{
+    const tbody=$("#pt tbody");
+    const r2=[...rows].sort((a,b)=>cmp(a[sortK],b[sortK])*sortDir).slice(0,400);
+    tbody.innerHTML = r2.map(p=>`<tr class="${p.name===selCode?"selrow":""}" data-n="${esc(p.name)}">
       <td class="name">${esc(p.name)}</td>
       <td><span class="flgcell">${p.flag}${esc(p.team)}</span></td>
-      <td>${esc(p.pos)}</td><td>${esc(p.nat||"—")}</td>
-      <td class="num">${fmt(p.age)}</td><td class="num">${p.app}</td><td class="num">${p.min}</td>
-      <td class="num">${p.g}</td><td class="num">${p.a}</td><td class="num">${p.yc}</td><td class="num">${p.rc}</td>
-    </tr>`).join("") || `<tr><td colspan="11" class="muted" style="text-align:center;padding:24px">No players match.</td></tr>`;
-    if(rows.length===300) tbody.innerHTML+=`<tr><td colspan="11" class="muted" style="text-align:center;padding:14px">Showing top 300 — narrow with filters.</td></tr>`;
+      <td>${esc(p.pos[0])}</td><td class="num">${fmtN(p.age,0)}</td>
+      <td class="num">${fmtN(p.min,0)}</td><td class="num">${fmtN(p.gs,0)}</td>
+      <td class="num">${fmtN(p.g,0)}</td><td class="num">${fmtN(p.a,0)}</td>
+      <td class="num">${fmtN(p.xg)}</td><td class="num hl">${fmtN(p.xg90)}</td>
+      <td class="num">${fmtN(p.sh90)}</td><td class="num">${fmtN(p.sot90)}</td>
+      <td class="num">${fmtN(p.kp90)}</td><td class="num">${fmtN(p.tk90)}</td>
+      <td class="num">${fmtN(p.rt)}</td></tr>`).join("")
+      || `<tr><td colspan="15" class="muted" style="text-align:center;padding:24px">No players match these filters.</td></tr>`;
+    if(rows.length>400) tbody.innerHTML+=`<tr><td colspan="15" class="muted" style="text-align:center;padding:12px">Showing top 400 by ${esc(PMLABEL[sortK]||sortK)} — narrow with filters.</td></tr>`;
+    tbody.querySelectorAll("tr[data-n]").forEach(tr=>tr.addEventListener("click",()=>{
+      selCode = selCode===tr.dataset.n?null:tr.dataset.n; refresh();
+    }));
+    document.querySelectorAll("#pt th").forEach(th=>th.classList.toggle("active",th.dataset.k===sortK));
   };
-  $("#psearch").addEventListener("input",e=>{q=e.target.value.toLowerCase();draw()});
-  $("#ppos").addEventListener("change",e=>{pos=e.target.value;draw()});
-  $("#pteam").addEventListener("change",e=>{team=e.target.value;draw()});
-  $("#pt").querySelectorAll("th").forEach(th=>th.addEventListener("click",()=>{
-    const k=th.dataset.k; if(sortK===k)sortDir*=-1;else{sortK=k;sortDir=th.dataset.t==="s"?1:-1;}
-    draw();
+
+  const refresh=()=>{
+    const rows=filtered();
+    drawScatter(rows); renderTable(rows);
+    $("#selinfo").innerHTML = selCode?`Selected: <b>${esc(selCode)}</b> — tap again to clear`:"";
+  };
+
+  $("#psearch").addEventListener("input",e=>{q=e.target.value.toLowerCase();refresh()});
+  $("#ppos").addEventListener("change",e=>{pos=e.target.value;refresh()});
+  $("#pteam").addEventListener("change",e=>{team=e.target.value;refresh()});
+  $("#pconf").addEventListener("change",e=>{conf=e.target.value;refresh()});
+  $("#pmin").addEventListener("input",e=>{minMin=+e.target.value;$("#mmval").textContent=minMin;refresh()});
+  $("#ax").addEventListener("change",e=>{ax=e.target.value;refresh()});
+  $("#ay").addEventListener("change",e=>{ay=e.target.value;refresh()});
+  document.querySelectorAll("#pt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
+    const k=th.dataset.k; if(sortK===k)sortDir*=-1;else{sortK=k;sortDir=th.dataset.t==="s"?1:-1;}refresh();
   }));
-  draw();
+  refresh();
 }
 
 /* ---------- TEAM STATS ---------- */
@@ -391,83 +500,188 @@ function stats(){
   draw();
 }
 
-/* ---------- BRACKET ---------- */
-let SCEN=null;
-function bracket(){
-  app.innerHTML = `
-    <div class="kicker">Knockout Stage</div>
-    <div class="sec-h"><h1>Bracket</h1><span class="pill">Round of 32 → Final</span></div>
-    <p class="muted note">Eight Round-of-32 ties depend on which third-placed teams advance. Pick a third-place qualifying scenario to resolve them (495 official combinations).</p>
-    <div class="bracket-controls">
-      <span class="muted" style="font-weight:700;font-size:13px">3rd-place scenario</span>
-      <select id="scen"><option>Loading…</option></select>
-      <span class="muted" id="scenInfo" style="font-size:12.5px"></span>
-    </div>
-    <div class="bracket-scroll"><div id="bk">Loading bracket…</div></div>`;
-  if(SCEN) initScen();
-  else if(window.WC_SCENARIOS){ SCEN=window.WC_SCENARIOS; initScen(); }
-  else fetch("scenarios.json").then(r=>r.json()).then(j=>{SCEN=j;initScen();})
-    .catch(()=>{ $("#bk").innerHTML=`<div class="empty">Couldn't load scenarios.json (needs to be served over http — works on GitHub Pages).</div>`;
-      $("#scen").innerHTML="<option>unavailable</option>"; drawBracket(null);});
-}
-function initScen(){
-  const sel=$("#scen");
-  sel.innerHTML = SCEN.scenarios.map(s=>`<option value="${s.scenario_number}">#${s.scenario_number} — groups ${s.qualifying_third_place_groups.join("")}</option>`).join("");
-  sel.addEventListener("change",()=>drawBracket(scenById(+sel.value)));
-  drawBracket(SCEN.scenarios[0]);
-}
-const scenById=n=>SCEN.scenarios.find(s=>s.scenario_number===n);
-function drawBracket(scen){
-  const b=D.bracket;
-  // map of match -> third opponent
-  const third={};
-  if(scen){ Object.values(scen.round_of_32_third_place_matchups).forEach(m=>{third[m.match]=m.third_placed_opponent;}); }
-  $("#scenInfo") && ($("#scenInfo").textContent = scen?`Third-placed teams advancing from groups ${scen.qualifying_third_place_groups.join(", ")}.`:"");
+/* ---------- PREDICTOR (groups → 3rd place → knockout) ---------- */
+let SCEN=null, SCENMAP=null, PRED=null, PSTEP=1;
+const pw = code => byCode(code)?.power ?? 50;
 
-  const slot = tok=>{
-    if(!tok) return `<span class="tp">—</span>`;
-    const m=/^([12])([A-L])$/.exec(tok);
-    if(m){const lbl=m[1]==="1"?"Winner":"Runner-up";return `<span class="tp">${lbl} ${m[2]}</span>`;}
-    const t=/^3([A-L])$/.exec(tok);
-    if(t) return `<span class="tp">3rd ${t[1]}</span>`;
-    return `<span class="tp">${esc(tok)}</span>`;
+function buildScenMap(){
+  SCENMAP={};
+  SCEN.scenarios.forEach(s=>{ SCENMAP[[...s.qualifying_third_place_groups].sort().join("")]=s; });
+}
+function defaultPred(){
+  const order={};
+  Object.entries(D.groups).forEach(([g,codes])=>{
+    order[g]=[...codes].sort((a,b)=>pw(b)-pw(a));
+  });
+  const thirds=Object.keys(order).map(g=>({g,code:order[g][2]}));
+  thirds.sort((a,b)=>pw(b.code)-pw(a.code));
+  const third=new Set(thirds.slice(0,8).map(x=>x.g));
+  return {order, third, picks:{}};
+}
+function bracket(){ // route entry (kept name so #/bracket still works)
+  if(!SCEN && window.WC_SCENARIOS){ SCEN=window.WC_SCENARIOS; }
+  if(SCEN){ if(!SCENMAP) buildScenMap(); if(!PRED) PRED=defaultPred(); renderPredictor(); return; }
+  app.innerHTML = `<div class="kicker">Predictor</div><div class="sec-h"><h1>World Cup Predictor</h1></div><div class="empty" id="bk">Loading scenarios…</div>`;
+  fetch("scenarios.json").then(r=>r.json()).then(j=>{SCEN=j;buildScenMap();PRED=PRED||defaultPred();renderPredictor();})
+    .catch(()=>{$("#bk").innerHTML=`<div class="empty">Couldn't load scenarios.json (works once served over http / on GitHub Pages).</div>`;});
+}
+
+/* resolution helpers */
+const winnerG=g=>PRED.order[g][0], runnerG=g=>PRED.order[g][1], thirdG=g=>PRED.order[g][2];
+function activeScen(){
+  if(PRED.third.size!==8) return null;
+  return SCENMAP[[...PRED.third].sort().join("")]||null;
+}
+function r32map(){
+  const b=D.bracket, fixed=b.round_of_32.fixed_matches, tp=b.round_of_32.third_place_matches;
+  const tok=t=>{const m=/^([12])([A-L])$/.exec(t); if(!m)return null; return m[1]==="1"?winnerG(m[2]):runnerG(m[2]);};
+  const map={};
+  Object.entries(fixed).forEach(([id,m])=>map[id]={home:tok(m.home),away:tok(m.away)});
+  const scen=activeScen(), third={};
+  if(scen) Object.values(scen.round_of_32_third_place_matchups).forEach(mm=>{third[mm.match]=mm.third_placed_opponent;});
+  Object.entries(tp).forEach(([id,m])=>{
+    const opp=third[id]; const aw=opp?thirdG(opp.replace("3","")):null;
+    map[id]={home:tok(m.home),away:aw,thirdPending:!opp};
+  });
+  return map;
+}
+let _R32=null;
+const matchDef=id=>{const b=D.bracket;
+  return (b.round_of_16.matches[id]||b.quarter_finals.matches[id]||b.semi_finals.matches[id]||
+          b.final.matches[id]||b.third_place_playoff.matches[id]);};
+function participants(id){
+  if(_R32[id]) return _R32[id];
+  const m=matchDef(id); if(!m) return {home:null,away:null};
+  const res=tok=>{
+    if(/^W\d+$/.test(tok)) return winnerCode("M"+tok.slice(1));
+    const lm=/^Loser M?(\d+)$/.exec(tok); if(lm) return loserCode("M"+lm[1]);
+    return null;
   };
-  const matchBox=(id,home,away)=>`<div class="match"><div class="mm">${id}</div>
-    <div class="m"><span>${slot(home)}</span></div>
-    <div class="m"><span>${slot(away)}</span></div></div>`;
+  return {home:res(m.home), away:res(m.away)};
+}
+function winnerCode(id){
+  const {home,away}=participants(id);
+  if(!home||!away) return null;
+  const p=PRED.picks[id];
+  if(p===home||p===away) return p;
+  return pw(home)>=pw(away)?home:away; // favourite advances by default
+}
+function loserCode(id){
+  const {home,away}=participants(id); const w=winnerCode(id);
+  if(!home||!away) return null; return w===home?away:home;
+}
 
-  // R32
-  const fixed=b.round_of_32.fixed_matches, tp=b.round_of_32.third_place_matches;
-  const r32ids=["M73","M74","M75","M76","M77","M78","M79","M80","M81","M82","M83","M84","M85","M86","M87","M88"];
-  const r32 = r32ids.map(id=>{
-    if(fixed[id]) return matchBox(id,fixed[id].home,fixed[id].away);
-    if(tp[id]) return matchBox(id,tp[id].home, third[id]||"3?");
-    return "";
-  }).join("");
+/* step nav + render */
+function renderPredictor(){
+  _R32=r32map();
+  const champ = winnerCode("M104");
+  app.innerHTML = `
+    <div class="kicker">Predictor</div>
+    <div class="sec-h"><h1>World Cup Predictor</h1>
+      ${champ?`<span class="pill champ-pill">${byCode(champ).flag} ${esc(byCode(champ).name)} — your champion</span>`:""}</div>
+    <p class="muted note">Favourites are pre-filled at every stage from a power rating (consensus strength blended with qualifying form) — change anything you like. Order each group, choose the eight third-placed teams that advance, then click your winner in every knockout tie.</p>
+    <div class="steps">
+      ${[["1","Group stage"],["2","Third place"],["3","Knockout"]].map(([n,l])=>
+        `<button class="step ${PSTEP==n?"on":""}" data-s="${n}"><b>${n}</b>${l}</button>`).join("")}
+      <button class="step reset" id="resetPred">↺ Reset to predicted</button>
+    </div>
+    <div id="pbody"></div>`;
+  document.querySelectorAll(".step[data-s]").forEach(b=>b.addEventListener("click",()=>{PSTEP=+b.dataset.s;renderPredictor();}));
+  $("#resetPred").addEventListener("click",()=>{PRED=defaultPred();renderPredictor();});
+  if(PSTEP===1) stepGroups(); else if(PSTEP===2) stepThird(); else stepKnockout();
+}
 
-  const winBox=(id,a,b2)=>`<div class="match"><div class="mm">${id}</div>
-    <div class="m"><span class="tp">W ${a}</span></div>
-    <div class="m"><span class="tp">W ${b2}</span></div></div>`;
-  const r16=Object.entries(b.round_of_16.matches).map(([id,m])=>
-    winBox(id,m.home.replace("W",""),m.away.replace("W",""))).join("");
-  const qf=Object.entries(b.quarter_finals.matches).map(([id,m])=>
-    winBox(id,m.home.replace("W",""),m.away.replace("W",""))).join("");
-  const sf=Object.entries(b.semi_finals.matches).map(([id,m])=>
-    winBox(id,m.home.replace("W",""),m.away.replace("W",""))).join("");
-  const fin=`<div class="match final-box"><div class="mm">M104 · FINAL</div>
-     <div class="m"><span class="tp">Winner SF1</span></div>
-     <div class="m"><span class="tp">Winner SF2</span></div></div>
-     <div class="match final-box" style="margin-top:10px"><div class="mm">M103 · 3rd place</div>
-     <div class="m"><span class="tp">Loser SF1</span></div>
-     <div class="m"><span class="tp">Loser SF2</span></div></div>`;
-
-  $("#bk").innerHTML=`<div class="bracket">
-    <div class="bcol"><h4>Round of 32</h4>${r32}</div>
-    <div class="bcol"><h4>Round of 16</h4>${r16}</div>
-    <div class="bcol"><h4>Quarter-finals</h4>${qf}</div>
-    <div class="bcol"><h4>Semi-finals</h4>${sf}</div>
-    <div class="bcol"><h4>Final</h4>${fin}</div>
+/* ---- Step 1: order the groups ---- */
+function stepGroups(){
+  const posLbl=["1 · Winner","2 · Runner-up","3 · Third place","4 · Eliminated"];
+  const posCls=["adv-win","adv-run","adv-third","adv-out"];
+  $("#pbody").innerHTML=`<p class="muted substep">Use the arrows to reorder each group. Top two always advance; third place may advance in the next step.</p>
+  <div class="grid-groups">
+    ${Object.keys(D.groups).map(g=>`
+      <div class="card gcard pgcard"><div class="gh"><span class="gl">Group <b>${g}</b></span></div>
+        ${PRED.order[g].map((code,i)=>{const t=byCode(code);
+          return `<div class="prow ${posCls[i]}">
+            <span class="ppos">${posLbl[i]}</span>
+            <span class="fl">${t.flag}</span>
+            <span class="nm">${esc(t.name)} <span class="pwr">${t.power}</span></span>
+            <span class="ord">
+              <button class="ob" data-g="${g}" data-i="${i}" data-d="-1" ${i===0?"disabled":""}>▲</button>
+              <button class="ob" data-g="${g}" data-i="${i}" data-d="1" ${i===3?"disabled":""}>▼</button>
+            </span></div>`;}).join("")}
+      </div>`).join("")}
   </div>`;
+  $("#pbody").querySelectorAll(".ob").forEach(b=>b.addEventListener("click",()=>{
+    const g=b.dataset.g,i=+b.dataset.i,d=+b.dataset.d,arr=PRED.order[g];
+    const j=i+d; if(j<0||j>3)return; [arr[i],arr[j]]=[arr[j],arr[i]]; stepGroups();
+  }));
+}
+
+/* ---- Step 2: pick 8 third-placed teams ---- */
+function stepThird(){
+  const cands=Object.keys(D.groups).map(g=>({g,code:thirdG(g)}));
+  const n=PRED.third.size;
+  const scen=n===8?activeScen():null;
+  $("#pbody").innerHTML=`
+    <p class="muted substep">Eight of the twelve third-placed teams reach the Round of 32. Pick exactly eight — <b id="tcount" class="${n===8?"ok":"warn"}">${n} selected</b>.</p>
+    <div class="third-grid">
+      ${cands.map(({g,code})=>{const t=byCode(code);const on=PRED.third.has(g);
+        return `<button class="third-chip ${on?"on":""}" data-g="${g}">
+          <span class="fl">${t.flag}</span>
+          <span class="tc-n">${esc(t.name)}</span>
+          <span class="tc-m">3rd · Group ${g} · pwr ${t.power}</span>
+          <span class="tc-x">${on?"✓":"+"}</span></button>`;}).join("")}
+    </div>
+    <p class="muted substep" style="margin-top:14px">${scen?`Matched the official FIFA allocation for groups ${[...PRED.third].sort().join(", ")} (scenario #${scen.scenario_number} of 495). Head to the knockout step.`:n===8?`That combination wasn't found in the scenario set.`:`Select ${8-n>0?(8-n)+" more":""} to reach eight and lock the Round of 32.`}</p>`;
+  $("#pbody").querySelectorAll(".third-chip").forEach(b=>b.addEventListener("click",()=>{
+    const g=b.dataset.g;
+    if(PRED.third.has(g)) PRED.third.delete(g);
+    else { if(PRED.third.size>=8){ const weakest=[...PRED.third].sort((x,y)=>pw(thirdG(x))-pw(thirdG(y)))[0]; PRED.third.delete(weakest);} 
+      PRED.third.add(g);}
+    stepThird();
+  }));
+}
+
+/* ---- Step 3: interactive knockout ---- */
+function teamPill(id,code,isWin){
+  if(code===null) return `<span class="bteam empty-bteam">—</span>`;
+  const t=byCode(code);
+  return `<button class="bteam ${isWin?"win":""}" data-m="${id}" data-c="${code}">
+    <span class="fl">${t.flag}</span><span class="bn">${esc(t.name)}</span></button>`;
+}
+function stepKnockout(){
+  const scen=activeScen();
+  if(!scen){ $("#pbody").innerHTML=`<div class="empty">Pick exactly eight third-placed teams in step 2 to build the Round of 32. <button class="btn sm" id="toStep2">Go to step 2 →</button></div>`;
+    $("#toStep2").addEventListener("click",()=>{PSTEP=2;renderPredictor();}); return; }
+  const matchBox=(id,label)=>{
+    const {home,away,thirdPending}=participants(id);
+    const w=winnerCode(id);
+    if(thirdPending) return `<div class="bmatch"><div class="mm">${label||id}</div><div class="empty-bteam">3rd place TBD</div></div>`;
+    return `<div class="bmatch"><div class="mm">${label||id}</div>
+      ${teamPill(id,home,w&&w===home)}
+      ${teamPill(id,away,w&&w===away)}</div>`;
+  };
+  const col=(title,ids,labels)=>`<div class="bcol"><h4>${title}</h4>${ids.map((id,i)=>matchBox(id,labels&&labels[i])).join("")}</div>`;
+  const r32ids=["M74","M77","M73","M75","M76","M78","M79","M80","M81","M82","M85","M87","M83","M84","M86","M88"];
+  const r16ids=["M89","M90","M91","M92","M95","M96","M93","M94"];
+  const qfids=["M97","M98","M99","M100"], sfids=["M101","M102"];
+  const champ=winnerCode("M104");
+  $("#pbody").innerHTML=`
+    <p class="muted substep">Click a team to send them through. Later rounds default to the favourite until you change them.</p>
+    <div class="bracket-scroll"><div class="bracket pred-bracket">
+      ${col("Round of 32",r32ids)}
+      ${col("Round of 16",r16ids)}
+      ${col("Quarter-finals",qfids)}
+      ${col("Semi-finals",sfids)}
+      <div class="bcol"><h4>Final</h4>
+        ${matchBox("M104","🏆 Final")}
+        <div class="champ-box">${champ?`${byCode(champ).flag} <b>${esc(byCode(champ).name)}</b><span>Predicted champions</span>`:`<span class="muted">Pick through to crown a winner</span>`}</div>
+        <h4 style="margin-top:18px">Third place</h4>
+        ${matchBox("M103","3rd-place playoff")}
+      </div>
+    </div></div>`;
+  $("#pbody").querySelectorAll(".bteam[data-c]").forEach(b=>b.addEventListener("click",()=>{
+    PRED.picks[b.dataset.m]=b.dataset.c; renderPredictor();
+  }));
 }
 
 /* ---------- ODDS / FANTASY (coming soon) ---------- */
