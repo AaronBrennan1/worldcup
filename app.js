@@ -1157,8 +1157,18 @@ function stepKnockout(){
     </div>`;
 
   $("#pbody").querySelectorAll(".bteam[data-c]").forEach(b=>b.addEventListener("click",()=>{
-    PRED.picks[b.dataset.m]=b.dataset.c; 
-    renderPredictor();
+    PRED.picks[b.dataset.m]=b.dataset.c;
+    _R32=r32map();
+    const champ=winnerCode("M104");
+    const secH=document.querySelector(".sec-h");
+    if(secH){
+      const existing=secH.querySelector(".champ-pill");
+      if(champ){
+        const pill=`<span class="pill champ-pill">${byCode(champ).flag} ${esc(byCode(champ).name)} — your champion</span>`;
+        if(existing) existing.outerHTML=pill; else secH.insertAdjacentHTML("beforeend",pill);
+      } else if(existing){ existing.remove(); }
+    }
+    stepKnockout();
   }));
 }
 
