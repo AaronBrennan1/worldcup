@@ -554,7 +554,7 @@ const matchDef=id=>{const b=D.bracket;
 
 
 function participants(id){
-  if(_R32[id]) return _R32[id];
+  if(_R32 && _R32[id]) return _R32[id];
   const m=matchDef(id); if(!m) return {home:null,away:null};
   const res=tok=>{
     if(/^W\d+$/.test(tok)) return winnerCode("M"+tok.slice(1));
@@ -566,6 +566,10 @@ function participants(id){
 function winnerCode(id){
   const {home,away}=participants(id);
   if(!home||!away) return null;
+  
+  // Guard clause if data structure hasn't been initialized on first load
+  if(!window.PRED || !PRED.picks) return null;
+  
   const p=PRED.picks[id];
   if(p===home||p===away) return p;
   return pw(home)>=pw(away)?home:away; // favourite advances by default
