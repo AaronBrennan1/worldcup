@@ -814,28 +814,7 @@ window.switchMobileRound = function(idx) {
   document.querySelectorAll(".bracket .bcol").forEach((col, i) => col.classList.toggle("active-round", i === idx));
 };
 
-  const col=(title,ids,labels)=>`<div class="bcol"><h4>${title}</h4>${ids.map((id,i)=>matchBox(id,labels&&labels[i])).join("")}</div>`;
-  const r32ids=["M74","M77","M73","M75","M76","M78","M79","M80","M81","M82","M85","M87","M83","M84","M86","M88"];
-  const r16ids=["M89","M90","M91","M92","M95","M96","M93","M94"];
-  const qfids=["M97","M98","M99","M100"], sfids=["M101","M102"];
-  const champ=winnerCode("M104");
-  $("#pbody").innerHTML=`
-    <p class="muted substep">Click a team to send them through. Later rounds default to the favourite until you change them.</p>
-    <div class="bracket-scroll"><div class="bracket pred-bracket">
-      ${col("Round of 32",r32ids)}
-      ${col("Round of 16",r16ids)}
-      ${col("Quarter-finals",qfids)}
-      ${col("Semi-finals",sfids)}
-      <div class="bcol"><h4>Final</h4>
-        ${matchBox("M104","🏆 Final")}
-        <div class="champ-box">${champ?`${byCode(champ).flag} <b>${esc(byCode(champ).name)}</b><span>Predicted champions</span>`:`<span class="muted">Pick through to crown a winner</span>`}</div>
-        <h4 style="margin-top:18px">Third place</h4>
-        ${matchBox("M103","3rd-place playoff")}
-      </div>
-    </div></div>`;
-  $("#pbody").querySelectorAll(".bteam[data-c]").forEach(b=>b.addEventListener("click",()=>{
-    PRED.picks[b.dataset.m]=b.dataset.c; renderPredictor();
-  }));
+  
 
 
 /* ---------- ODDS / FANTASY (coming soon) ---------- */
