@@ -604,14 +604,16 @@ function players(){
 
   const drawScatter = (rows)=>{
     const pts = rows.filter(p=>p[ax]!=null && p[ay]!=null);
-    const topPerformers = [...pts].sort((m,n) => ((n[ay] * n[ax]) - (m[ay] * m[ax]))).slice(0, 25);
+    const topPerformers = [...pts].sort((m,n) => ((n[ay] * n[ax]) - (m[ay] * m[ax]))).slice(0, 8);
     const visibleScatterSet = new Set(topPerformers.map(p => p.name));
     const plottedPts = pts.slice(0, 85);
 
-    const W=840,H=440,pad={l:65,r:40,t:30,b:50};
+    const W=840,H=440,pad={l:65,r:65,t:40,b:50};
     const xs=plottedPts.map(p=>p[ax]), ys=plottedPts.map(p=>p[ay]);
-    const xmax=Math.max(0.0001,...xs), ymax=Math.max(0.0001,...ys);
-    const xmin=Math.min(0,...xs), ymin=Math.min(0,...ys);
+    const xmax=Math.max(0.0001,...xs) * 1.15; 
+    const ymax=Math.max(0.0001,...ys) * 1.15;
+    const xmin=Math.min(0,...xs);
+    const ymin=Math.min(0,...ys);
     const sx=v=>pad.l+(v-xmin)/(xmax-xmin||1)*(W-pad.l-pad.r);
     const sy=v=>H-pad.b-(v-ymin)/(ymax-ymin||1)*(H-pad.t-pad.b);
     
@@ -635,7 +637,10 @@ function players(){
         fill-opacity="${sel?1.0:0.65}" stroke="#0b0f17" stroke-width="${sel?2.5:1.2}" style="cursor:pointer; transition: r 0.2s;" />`;
 
       if (sel || visibleScatterSet.has(p.name)) {
-        labelsHtml += `<text class="scatter-inline-label" x="${(cxPos + 9).toFixed(1)}" y="${(cyPos + 3).toFixed(1)}" font-size="10" font-family="sans-serif" font-weight="600" fill="${sel ? "#ff0055" : "#a1b0cb"}">${esc(shortName(p.name))}</text>`;
+        const isNearRight = cxPos > (W - 120);
+        const textX = isNearRight ? (cxPos - 9) : (cxPos + 9);
+        const anchor = isNearRight ? 'end' : 'start';
+        labelsHtml += `<text class="scatter-inline-label" x="${textX.toFixed(1)}" y="${(cyPos + 3).toFixed(1)}" text-anchor="${anchor}" font-size="10" font-family="sans-serif" font-weight="600" fill="${sel ? "#ff0055" : "#a1b0cb"}">${esc(shortName(p.name))}</text>`;
       }
     });
 
@@ -758,6 +763,10 @@ function stats(){
     ["cards_total","Cards",1],
   ];
   
+  let sortK="goals_scored", dir=-1;
+  let ax="xg_for_avg_overall", ay="goals_scored";
+  let selTeamCode=null;
+
   app.innerHTML = `
     <div class="dashboard-wrapper">
       <div>
@@ -769,12 +778,32 @@ function stats(){
         <div class="hud-title" style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between; flex-wrap:wrap;">
           <span>Rank Structural Standings Dataset By Core Condition Parameter:</span>
           <select id="metric" style="background:#1c2635; border:1px solid var(--card-border); color:var(--lime); padding:8px 16px; border-radius:8px; font-weight:700; outline:none; cursor:pointer;">
-            ${metrics.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}
+            ${metrics.map(([k,l])=>`<option value="${k}" ${k===sortK?"selected":""}>${l}</option>`).join("")}
           </select>
         </div>
       </div>
 
       <div id="podium-highlights-container" class="championship-podium-deck"></div>
+
+      <div class="scatter-container-card">
+        <div class="scatter-axis-selectors">
+          <div class="axis-pill-selector">
+            <span>Vertical Axis (Y):</span>
+            <select id="tay">${metrics.map(([k,l])=>`<option value="${k}"${k===ay?" selected":""}>${l}</option>`).join("")}</select>
+          </div>
+          <div class="axis-pill-selector">
+            <span>Horizontal Axis (X):</span>
+            <select id="tax">${metrics.map(([k,l])=>`<option value="${k}"${k===ax?" selected":""}>${l}</option>`).join("")}</select>
+          </div>
+        </div>
+        <div class="scatter-view-wrapper">
+          <div id="team-scatter"></div>
+        </div>
+        <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 12px;" class="text-muted">
+          <span id="tscount"></span>
+          <span>💡 Hover points for team breakdown card · Click to lock highlight row</span>
+        </div>
+      </div>
 
       <div class="table-container-card">
         <div class="tbl-wrap">
@@ -802,10 +831,89 @@ function stats(){
       </div>
     </div>`;
       
-  let sortK="goals_scored", dir=-1;
   const dirMap=Object.fromEntries(metrics.map(([k,,d])=>[k,d]));
   const tbody=$("#tt tbody");
   
+  const drawTeamScatter = (rows) => {
+    const pts = rows.filter(r => r[ax] != null && r[ay] != null);
+    const W = 840, H = 440, pad = { l: 65, r: 65, t: 40, b: 50 };
+    const xs = pts.map(r => parseFloat(r[ax]) || 0), ys = pts.map(r => parseFloat(r[ay]) || 0);
+    
+    const xmax = Math.max(0.0001, ...xs) * 1.15; 
+    const ymax = Math.max(0.0001, ...ys) * 1.15;
+    const xmin = Math.min(0, ...xs);
+    const ymin = Math.min(0, ...ys);
+    
+    const sx = v => pad.l + (v - xmin) / (xmax - xmin || 1) * (W - pad.l - pad.r);
+    const sy = v => H - pad.b - (v - ymin) / (ymax - ymin || 1) * (H - pad.t - pad.b);
+
+    const med = a => { if (!a.length) return 0; const s = [...a].sort((m, n) => m - n); return s[Math.floor(s.length / 2)]; };
+    const mx = med(xs), my = med(ys);
+    const rad = r => r.code === selTeamCode ? 9 : 6;
+    const ticks = (lo, hi, n = 5) => Array.from({ length: n + 1 }, (_, i) => lo + (hi - lo) * i / n);
+
+    let dotsHtml = "";
+    let labelsHtml = "";
+    const PMLABEL_TEAM = Object.fromEntries(metrics.map(([k, l]) => [k, l]));
+
+    pts.forEach((r, i) => {
+      const sel = r.code === selTeamCode;
+      const cxPos = sx(parseFloat(r[ax]) || 0);
+      const cyPos = sy(parseFloat(r[ay]) || 0);
+      const teamRadius = rad(r);
+
+      dotsHtml += `<circle class="dot${sel ? " sel" : ""}" data-i="${i}" cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}"
+        r="${teamRadius.toFixed(1)}" fill="${sel ? "var(--mag, #ff0055)" : "var(--lime, #ccff00)"}"
+        fill-opacity="${sel ? 1.0 : 0.65}" stroke="#0b0f17" stroke-width="${sel ? 2.5 : 1.2}" style="cursor:pointer; transition: r 0.2s;" />`;
+
+      const isNearRight = cxPos > (W - 120);
+      const textX = isNearRight ? (cxPos - 9) : (cxPos + 9);
+      const anchor = isNearRight ? 'end' : 'start';
+
+      labelsHtml += `<text class="scatter-inline-label" x="${textX.toFixed(1)}" y="${(cyPos + 3).toFixed(1)}" text-anchor="${anchor}" font-size="10" font-family="sans-serif" font-weight="600" fill="${sel ? "#ff0055" : "#a1b0cb"}">${esc(r.name)}</text>`;
+    });
+
+    const xlabels = ticks(xmin, xmax).map(v => `<text x="${sx(v)}" y="${H - pad.b + 18}" text-anchor="middle" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
+    const ylabels = ticks(ymin, ymax).map(v => `<text x="${pad.l - 10}" y="${sy(v) + 4}" text-anchor="end" font-size="10" fill="#62728d">${(+v.toFixed(2))}</text>`).join("");
+
+    $("#team-scatter").innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="scatter-svg" id="ts_svg">
+      <rect width="${W}" height="${H}" fill="rgba(255,255,255,0.01)" rx="8" pointer-events="none" />
+      <line class="grid" x1="${pad.l}" y1="${sy(my)}" x2="${W - pad.r}" y2="${sy(my)}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
+      <line class="grid" x1="${sx(mx)}" y1="${pad.t}" x2="${sx(mx)}" y2="${H - pad.b}" stroke-dasharray="4 4" stroke="rgba(255,255,255,0.07)"/>
+      <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H - pad.b}" stroke="rgba(255,255,255,0.15)"/>
+      <line class="axis" x1="${pad.l}" y1="${H - pad.b}" x2="${W - pad.r}" y2="${H - pad.b}" stroke="rgba(255,255,255,0.15)"/>
+      ${xlabels}${ylabels}
+      <text x="${pad.l + (W - pad.l - pad.r) / 2}" y="${H - 8}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL_TEAM[ax].toUpperCase())} →</text>
+      <text transform="rotate(-90 16 ${pad.t + (H - pad.t - pad.b) / 2})" x="16" y="${pad.t + (H - pad.t - pad.b) / 2}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a99ad" letter-spacing="0.05em">${esc(PMLABEL_TEAM[ay].toUpperCase())} →</text>
+      ${dotsHtml}
+      ${labelsHtml}
+      <g id="ttip" style="display:none"><rect rx="8" id="ttipbg" fill="#172232" stroke="#2b394e" filter="drop-shadow(0px 4px 12px rgba(0,0,0,0.5))"/><text id="ttiptx" font-size="12" fill="#fff"></text></g>
+    </svg>`;
+
+    $("#tscount").textContent = `Plotted Cluster Density: ${pts.length} nations active in matrix dataset.`;
+
+    const svg = $("#ts_svg"), tip = $("#ttip", svg), tbg = $("#ttipbg", svg), ttx = $("#ttiptx", svg);
+    svg.querySelectorAll(".dot").forEach(c => {
+      c.addEventListener("mousemove", () => {
+        const r = pts[+c.dataset.i];
+        ttx.innerHTML = `<tspan x="12" dy="4" style="font-weight:800; fill:var(--lime); font-size:13px">${esc(r.name)}</tspan>` +
+          `<tspan x="12" dy="18" fill="#8a99ad" font-size="11">Group ${esc(r.group)}</tspan>` +
+          `<tspan x="12" dy="18" fill="#fff">${esc(PMLABEL_TEAM[ay])}: ${fmt(r[ay])}</tspan>` +
+          `<tspan x="12" dy="16" fill="#fff">${esc(PMLABEL_TEAM[ax])}: ${fmt(r[ax])}</tspan>`;
+        const bb = ttx.getBBox ? ttx.getBBox() : { width: 160, height: 75 };
+        let tx = +c.getAttribute("cx") + 16, ty = +c.getAttribute("cy") - 20;
+        if (tx + bb.width + 24 > W) tx = +c.getAttribute("cx") - bb.width - 24;
+        if (ty < 10) ty = 12;
+        tip.setAttribute("transform", `translate(${tx},${ty})`);
+        tbg.setAttribute("x", 0); tbg.setAttribute("y", -10);
+        tbg.setAttribute("width", bb.width + 24); tbg.setAttribute("height", bb.height + 20);
+        tip.style.display = "block";
+      });
+      c.addEventListener("mouseleave", () => tip.style.display = "none");
+      c.addEventListener("click", () => { const r = pts[+c.dataset.i]; selTeamCode = (selTeamCode === r.code ? null : r.code); draw(); });
+    });
+  };
+
   const draw=()=>{
     let rows=[...cs];
     rows.sort((a,b)=>cmp(a[sortK],b[sortK])*dir);
@@ -835,6 +943,8 @@ function stats(){
     });
     $("#podium-highlights-container").innerHTML = podiumHtml;
 
+    drawTeamScatter(rows);
+
     tbody.innerHTML=rows.map((r,i)=>{
       const rawVal = parseFloat(r[sortK]) || 0;
       const barPercentage = Math.min(100, Math.max(3, (Math.abs(rawVal) / maxMetricVal) * 100));
@@ -845,7 +955,7 @@ function stats(){
         </div>
       `;
 
-      return `<tr>
+      return `<tr class="${r.code===selTeamCode?"selrow":""}" data-code="${r.code}" style="cursor:pointer;">
         <td class="rk num" style="font-weight: 800; color: var(--lime); font-size:15px; text-align:center;">${i+1}</td>
         <td class="name">
           <a class="flgcell" href="#/country/${r.code}" style="font-weight:700; color:#fff; text-decoration:none; display:block;">${r.flag || ''} ${esc(r.name)}</a>
@@ -864,12 +974,22 @@ function stats(){
         <td class="num ${sortK==='average_possession'?'active-sort-cell':''}">${fmt(r.average_possession)}%</td></tr>`;
     }).join("");
     
+    tbody.querySelectorAll("tr[data-code]").forEach(tr=>{
+      tr.addEventListener("click",()=>{
+        selTeamCode = selTeamCode===tr.dataset.code?null:tr.dataset.code;
+        draw();
+      });
+    });
+
     document.querySelectorAll("#tt th[data-k]").forEach(th => {
       th.classList.toggle("active-sort-th", th.dataset.k === sortK);
     });
   };
 
   $("#metric").addEventListener("change",e=>{sortK=e.target.value;dir=dirMap[sortK]||-1; draw();});
+  $("#tax").addEventListener("change",e=>{ax=e.target.value; draw();});
+  $("#tay").addEventListener("change",e=>{ay=e.target.value; draw();});
+  
   document.querySelectorAll("#tt th[data-k]").forEach(th=>th.addEventListener("click",()=>{
     const k=th.dataset.k; if(sortK===k)dir*=-1; else {sortK=k;dir=th.dataset.t==="s"?1:-1;}draw()}));
   draw();
