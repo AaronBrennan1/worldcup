@@ -1,7 +1,8 @@
 import { sql } from './_db.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+//   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+res.setHeader('Cache-Control', 'no-store');
   try {
     const { team, scope = 'TOTAL' } = req.query;
     const rows = team
