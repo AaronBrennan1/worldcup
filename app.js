@@ -102,6 +102,44 @@ function flagFor(name){ return teamByName(name)?.flag || "🏳️"; }
 function codeFor(name){ return teamByName(name)?.code || null; }
 function confFor(name){ return teamByName(name)?.conf || null; }
 
+/* ============================================================
+   PREDICTED STARTING XI + MANAGER DATA
+   Embedded from world_cup_2026_teams.json. Keyed by the same
+   normalised-name scheme used for the API bridge, so a local
+   team (by code → name) resolves to its lineup regardless of
+   spelling differences. Each record:
+     {manager, manager_nat, formation, gk[], def[], dm[], mid[], am[], fwd[]}
+   ============================================================ */
+const _XI_RAW = {"algeria":{"manager":"Vladimir Petkovic","manager_nat":"Bosnian","formation":"4-2-3-1","gk":["Luca Zidane"],"def":["Rafik Belghali","Zinedine Belaid","Ramy Bensebaini","Rayan Ait Nouri"],"dm":["Ramiz Zerrouki","Hicham Boudaoui"],"mid":[],"am":["Riyad Mahrez","Houssem Aouar","Fares Chaibi"],"fwd":["Amine Gouiri"]},"argentina":{"manager":"Lionel Scaloni","manager_nat":"Argentine","formation":"4-3-3","gk":["Emiliano Martinez"],"def":["Nahuel Molina","Nicolas Otamendi","Cristian Romero","Nicolas Tagliafico"],"dm":[],"mid":["Alexis Mac Allister","Leandro Paredes","Enzo Fernandez"],"am":[],"fwd":["Lionel Messi","Julian Alvarez","Thiago Almada"]},"australia":{"manager":"Tony Popovic","manager_nat":"Australian","formation":"5-4-1","gk":["Mathew Ryan"],"def":["Jacob Italiano","Milos Degenek","Harry Souttar","Alessandro Circati","Jordan Bos"],"dm":[],"mid":["Connor Metcalfe","Cameron Devlin","Aiden O'Neill","Nestory Irankunda"],"am":[],"fwd":["Mohamed Toure"]},"austria":{"manager":"Ralf Rangnick","manager_nat":"German","formation":"4-2-3-1","gk":["Alexander Schlager"],"def":["Konrad Laimer","Philipp Lienhart","David Alaba","Phillipp Mwene"],"dm":["Xaver Schlager","Nicolas Seiwald"],"mid":[],"am":["Patrick Wimmer","Christoph Baumgartner","Marcel Sabitzer"],"fwd":["Marko Arnautovic"]},"belgium":{"manager":"Rudi Garcia","manager_nat":"French","formation":"4-2-3-1","gk":["Thibaut Courtois"],"def":["Timothy Castagne","Zeno Debast","Arthur Theate","Maxim De Cuyper"],"dm":["Youri Tielemans","Amadou Onana"],"mid":[],"am":["Jeremy Doku","Kevin De Bruyne","Leandro Trossard"],"fwd":["Charles De Ketelaere"]},"bosnia and herzegovina":{"manager":"Sergej Barbarez","manager_nat":"Bosnian","formation":"4-4-2","gk":["Nikola Vasilj"],"def":["Amar Dedic","Nikola Katic","Tarik Muharemovic","Sead Kolasinac"],"dm":[],"mid":["Esmir Bajraktarevic","Ivan Sunjic","Benjamin Tahirovic","Amar Memic"],"am":[],"fwd":["Ermedin Demirovic","Edin Dzeko"]},"brazil":{"manager":"Carlo Ancelotti","manager_nat":"Italian","formation":"4-4-2","gk":["Alisson"],"def":["Wesley","Marquinhos","Gabriel Magalhaes","Douglas Santos"],"dm":[],"mid":["Luiz Henrique","Casemiro","Bruno Guimaraes","Raphinha"],"am":[],"fwd":["Vinicius Jr","Matheus Cunha"]},"canada":{"manager":"Jesse Marsch","manager_nat":"American","formation":"4-4-2","gk":["Maxime Crepeau"],"def":["Niko Sigur","Moise Bombito","Alfie Jones","Richie Laryea"],"dm":[],"mid":["Tajon Buchanan","Ismael Kone","Stephen Eustaquio","Alphonso Davies"],"am":[],"fwd":["Tani Oluwaseyi","Jonathan David"]},"cape verde":{"manager":"Bubista","manager_nat":"Cape Verdean","formation":"4-2-3-1","gk":["Vozinha"],"def":["Steven Moreira","Roberto Lopes","Diney Borges","Sidny Cabral"],"dm":["Jamiro Monteiro","Laros Duarte"],"mid":[],"am":["Garry Rodrigues","Yannick Semedo","Jovane Cabral"],"fwd":["Dailon Livramento"]},"colombia":{"manager":"Nestor Lorenzo","manager_nat":"Argentine","formation":"4-2-3-1","gk":["Alvaro Montero"],"def":["Daniel Munoz","Davinson Sanchez","Yerry Mina","Johan Mojica"],"dm":["Jefferson Lerma","Richard Rios"],"mid":[],"am":["Jhon Arias","James Rodriguez","Luis Diaz"],"fwd":["Luis Suarez"]},"croatia":{"manager":"Zlatko Dalic","manager_nat":"Croatian","formation":"4-2-3-1","gk":["Dominik Livakovic"],"def":["Josip Stanisic","Josip Sutalo","Duje Caleta-Car","Josko Gvardiol"],"dm":["Luka Sucic","Luka Modric"],"mid":[],"am":["Mario Pasalic","Andrej Kramaric","Ivan Perisic"],"fwd":["Ante Budimir"]},"curacao":{"manager":"Dick Advocaat","manager_nat":"Dutch","formation":"4-3-3","gk":["Eloy Room"],"def":["Shurandy Sambo","Roshon van Eijma","Armando Obispo","Sherel Floranus"],"dm":[],"mid":["Juninho Bacuna","Livano Comenencia","Leandro Bacuna"],"am":[],"fwd":["Tahith Chong","Jurgen Locadia","Kenji Gorre"]},"czechia":{"manager":"Miroslav Koubek","manager_nat":"Czech","formation":"4-2-3-1","gk":["Jindrich Stanek"],"def":["Vladimir Coufal","Robin Hranac","Ladislav Krejci","David Jurasek"],"dm":["Tomas Soucek","Tomas Holes"],"mid":[],"am":["Patrik Schick","Lukas Provod","Pavel Sulc"],"fwd":["Adam Hlozek"]},"dr congo":{"manager":"Sebastien Desabre","manager_nat":"French","formation":"4-3-3","gk":["Matthieu Epolo"],"def":["Aaron Wan-Bissaka","Chancel Mbemba","Gedeon Kalulu","Arthur Masuaku"],"dm":[],"mid":["Gael Kakuta","Samuel Moutoussamy","Ngal'ayel Mukau"],"am":[],"fwd":["Yoane Wissa","Simon Banza","Cedric Bakambu"]},"ecuador":{"manager":"Sebastian Beccacece","manager_nat":"Argentine","formation":"4-3-3","gk":["Hernan Galindez"],"def":["Angelo Preciado","Joel Ordonez","Willian Pacho","Piero Hincapie"],"dm":[],"mid":["Pedro Vite","Moises Caicedo","Denil Castillo"],"am":[],"fwd":["John Yeboah","Enner Valencia","Nilson Angulo"]},"egypt":{"manager":"Hossam Hassan","manager_nat":"Egyptian","formation":"3-4-1-2","gk":["Mohamed El Shenawy"],"def":["Yasser Ibrahim","Hossam Abdelmaguid","Rami Rabia"],"dm":[],"mid":["Mohamed Hany","Marwan Attia","Mohannad Lasheen","Ahmed Fattouh"],"am":["Emam Ashour"],"fwd":["Mohamed Salah","Omar Marmoush"]},"england":{"manager":"Thomas Tuchel","manager_nat":"German","formation":"4-2-3-1","gk":["Jordan Pickford"],"def":["Reece James","Marc Guehi","Ezri Konsa","Nico O'Reilly"],"dm":["Elliot Anderson","Declan Rice"],"mid":[],"am":["Bukayo Saka","Jude Bellingham","Eberechi Eze"],"fwd":["Harry Kane"]},"france":{"manager":"Didier Deschamps","manager_nat":"French","formation":"4-2-3-1","gk":["Mike Maignan"],"def":["Jules Kounde","William Saliba","Dayot Upamecano","Theo Hernandez"],"dm":["Adrien Rabiot","Aurelien Tchouameni"],"mid":[],"am":["Ousmane Dembele","Michael Olise","Desire Doue"],"fwd":["Kylian Mbappe"]},"germany":{"manager":"Julian Nagelsmann","manager_nat":"German","formation":"4-2-3-1","gk":["Manuel Neuer"],"def":["Joshua Kimmich","Jonathan Tah","Nico Schlotterbeck","David Raum"],"dm":["Aleksandar Pavlovic","Leon Goretzka"],"mid":[],"am":["Leroy Sane","Jamal Musiala","Florian Wirtz"],"fwd":["Kai Havertz"]},"ghana":{"manager":"Otto Addo","manager_nat":"Ghanaian","formation":"3-4-3","gk":["Benjamin Asare"],"def":["Jonas Adjetey","Alidu Seidu","Kojo Oppong Preprah"],"dm":[],"mid":["Caleb Yirenkyi","Kwasi Sibo","Thomas Partey","Gideon Mensah"],"am":[],"fwd":["Kamal Deen Sulemana","Antoine Semenyo","Jordan Ayew"]},"haiti":{"manager":"Sebastien Migne","manager_nat":"French","formation":"4-3-3","gk":["Johny Placide"],"def":["Carlens Arcus","Ricardo Ade","Jean-Kevin Duverne","Martin Experience"],"dm":[],"mid":["Derrick Deedson","Jean-Ricner Bellegarde","Alexandre Pierre"],"am":[],"fwd":["Mickael Isidor","Duckens Nazon","Frantzdy Pierrot"]},"iran":{"manager":"Amir Ghalenoei","manager_nat":"Iranian","formation":"4-2-3-1","gk":["Alireza Beiranvand"],"def":["Ramin Rezaeian","Majid Hosseini","Shoja Khalilzadeh","Ehsan Hajsafi"],"dm":["Saeid Ezatolahi","Saman Ghoddos"],"mid":[],"am":["Alireza Jahanbakhsh","Ali Ghayedi","Milad Mohammadi"],"fwd":["Mehdi Taremi"]},"iraq":{"manager":"Graham Arnold","manager_nat":"Australian","formation":"4-2-3-1","gk":["Jalal Hassan"],"def":["Hussein Ali","Rebin Sulaka","Abbas Tahseen","Saad Natiq Doski"],"dm":["Jassim Al-Ammari","Hussain Bayesh"],"mid":[],"am":["Ali Jasim","Mohanad Ali Iqbal","Ali Amyn"],"fwd":["Aymen Hussein"]},"ivory coast":{"manager":"Emerse Fae","manager_nat":"Ivorian","formation":"4-3-3","gk":["Yahia Fofana"],"def":["Simon Doue","Odilon Koussonou","Evan Ndicka","Yan Aurel Bissouma Konan"],"dm":[],"mid":["Franck Kessie","Ibrahim Sangare","Emmanuel Oulai"],"am":[],"fwd":["Nicolas Pepe","Simon Guessand","Wilfried Gnonto Diomande"]},"japan":{"manager":"Hajime Moriyasu","manager_nat":"Japanese","formation":"3-4-2-1","gk":["Zion Suzuki"],"def":["Hiroki Ito","Ko Itakura","Miki Yamane"],"dm":[],"mid":["Hiroki Sugawara","Wataru Endo","Ao Tanaka","Daichi Kamada"],"am":["Takefusa Kubo","Junya Ito"],"fwd":["Ayase Ueda"]},"jordan":{"manager":"Jamal Sellami","manager_nat":"Moroccan","formation":"3-4-3","gk":["Yazeed Abulaila"],"def":["Mohammad Abu Dahab","Baha Nasib","Raed Al-Arab"],"dm":[],"mid":["Ehsan Haddad","Montaser Al-Rawahbdeh","Hassan Al-Rashdan","Yazan Abu Taha"],"am":[],"fwd":["Mohammad Tamari","Musa Olwan","Ahmad Al-Mardi"]},"mexico":{"manager":"Javier Aguirre","manager_nat":"Mexican","formation":"4-3-3","gk":["Raul Rangel"],"def":["Jorge Sanchez","Cesar Montes","Johan Vasquez","Jesus Gallardo"],"dm":[],"mid":["Alvaro Fidalgo","Edson Alvarez","Orbelín Pineda"],"am":[],"fwd":["Alexis Vega","Raul Jimenez","Julian Quinones"]},"morocco":{"manager":"Mohamed Ouahbi","manager_nat":"Moroccan","formation":"4-2-3-1","gk":["Yassine Bounou"],"def":["Achraf Hakimi","Nayef Aguerd","Jawad El Yamiq","Zakaria El Ouahdi"],"dm":["Azzedine Ounahi","Bilal El Khannouss"],"mid":[],"am":["Brahim Diaz","Abde Ezzalzouli","Hakim Ziyech"],"fwd":["Ayoub El Kaabi"]},"netherlands":{"manager":"Ronald Koeman","manager_nat":"Dutch","formation":"4-2-3-1","gk":["Bart Verbruggen"],"def":["Denzel Dumfries","Virgil van Dijk","Nathan Ake","Micky van de Ven"],"dm":["Frenkie de Jong","Ryan Gravenberch"],"mid":[],"am":["Donyell Malen","Tijjani Reijnders","Cody Gakpo"],"fwd":["Memphis Depay"]},"new zealand":{"manager":"Darren Bazeley","manager_nat":"English","formation":"4-2-3-1","gk":["Max Crocombe"],"def":["Callan Elliot","Liberato Cacace","Michael Boxall","Elijah Just"],"dm":["Joe Bell","Marko Stamenic"],"mid":[],"am":["Alex Greive","Ben Waine","Clayton Lewis"],"fwd":["Chris Wood"]},"norway":{"manager":"Stale Solbakken","manager_nat":"Norwegian","formation":"4-3-3","gk":["Orjan Nyland"],"def":["Julian Ryerson","Stian Gregersen","Leo Ostigard","Bard Magner Wolfe"],"dm":[],"mid":["Kristian Thorstvedt","Mathias Jensen","Sander Berge"],"am":[],"fwd":["Alexander Sorloth","Erling Haaland","Antonio Nusa"]},"panama":{"manager":"Thomas Christiansen","manager_nat":"Spanish","formation":"3-4-2-1","gk":["Orlando Mosquera"],"def":["Edgardo Farina","Jose Cordoba","Andres Andrade"],"dm":[],"mid":["Michael Amir Murillo","Adalberto Carrasquilla","Anibal Godoy","Eric Davis"],"am":["Yoel Barcenas","Alberto Quintero"],"fwd":["Ismael Fajardo"]},"paraguay":{"manager":"Gustavo Alfaro","manager_nat":"Argentine","formation":"4-4-2","gk":["Antony Silva"],"def":["Ivan Ramirez","Gustavo Gomez","Omar Alderete","Junior Alonso"],"dm":[],"mid":["Diego Gomez","Rodrigo Rojas","Andres Cubas","Miguel Almiron"],"am":[],"fwd":["Julio Enciso","Antonio Sanabria"]},"portugal":{"manager":"Roberto Martinez","manager_nat":"Spanish","formation":"4-3-3","gk":["Diogo Costa"],"def":["Joao Cancelo","Ruben Dias","Goncalo Inacio","Nuno Mendes"],"dm":[],"mid":["Joao Neves","Vitinha","Bruno Fernandes"],"am":[],"fwd":["Bernardo Silva","Cristiano Ronaldo","Rafael Leao"]},"qatar":{"manager":"Julen Lopetegui","manager_nat":"Spanish","formation":"4-3-3","gk":["Meshaal Barsham"],"def":["Pedro Miguel","Abdelkarim Hassan","Boualem Khoukhi","Musab Khoder"],"dm":[],"mid":["Karim Boudiaf","Abdullah Al-Ahrak","Akram Afif"],"am":[],"fwd":["Hasan Al-Haydos","Almoez Ali","Ismaeel Mohammad"]},"saudi arabia":{"manager":"Giorgos Donis","manager_nat":"Greek","formation":"4-3-3","gk":["Mohammed Al-Aqidi"],"def":["Abdulellah Al-Amri","Sultan Al-Ghannam","Ali Al-Bulayhi","Saud Abdulhamid"],"dm":[],"mid":["Riyadh Sharahili","Ali Al-Hassan","Nasser Al-Dawsari"],"am":[],"fwd":["Firas Al-Buraikan","Saleh Al-Shehri","Salem Al-Dawsari"]},"scotland":{"manager":"Steve Clarke","manager_nat":"Scottish","formation":"3-4-3","gk":["Angus Gunn"],"def":["Aaron Hickey","Grant Hanley","Liam Cooper"],"dm":[],"mid":["Andy Robertson","Callum McGregor","Scott McTominay","Stuart Armstrong"],"am":[],"fwd":["Ryan Christie","Che Adams","Lawrence Shankland"]},"senegal":{"manager":"Pape Thiaw","manager_nat":"Senegalese","formation":"4-3-3","gk":["Edouard Mendy"],"def":["Youssouf Sabaly","Kalidou Koulibaly","Abdou Diallo","Ismail Jakobs"],"dm":[],"mid":["Nampalys Mendy","Idrissa Gueye","Pape Matar Sarr"],"am":[],"fwd":["Ismaila Sarr","Sadio Mane","Krepin Diatta"]},"south africa":{"manager":"Hugo Broos","manager_nat":"Belgian","formation":"4-3-3","gk":["Ronwen Williams"],"def":["Khuliso Mudau","Nkosinathi Sibisi","Aubrey Modiba","Ime Okon"],"dm":[],"mid":["Teboho Mokoena","Thalente Mbatha","Jayden Adams"],"am":[],"fwd":["Oswin Appollis","Lyle Foster","Percy Tau"]},"south korea":{"manager":"Hong Myung-bo","manager_nat":"South Korean","formation":"4-2-3-1","gk":["Kim Seung-gyu"],"def":["Kim Moon-hwan","Kim Min-jae","Lee Han-beom","Lee Tae-seok"],"dm":["Jung Woo-young","Hwang In-beom"],"mid":[],"am":["Lee Kang-in","Lee Jae-sung","Hwang Hee-chan"],"fwd":["Son Heung-min"]},"spain":{"manager":"Luis de la Fuente","manager_nat":"Spanish","formation":"4-3-3","gk":["Unai Simon"],"def":["Dani Carvajal","Robin Le Normand","Aymeric Laporte","Marc Cucurella"],"dm":[],"mid":["Fabian Ruiz","Rodri","Pedri"],"am":[],"fwd":["Lamine Yamal","Alvaro Morata","Nico Williams"]},"sweden":{"manager":"Graham Potter","manager_nat":"English","formation":"4-4-2","gk":["Robin Olsen"],"def":["Mikael Lustig","Victor Lindelof","Mattias Svanberg","Ludwig Augustinsson"],"dm":[],"mid":["Sebastian Larsson","Albin Ekdal","Dejan Kulusevski","Emil Forsberg"],"am":[],"fwd":["Viktor Gyokeres","Alexander Isak"]},"switzerland":{"manager":"Murat Yakin","manager_nat":"Swiss","formation":"4-2-3-1","gk":["Yann Sommer"],"def":["Silvan Widmer","Nico Elvedi","Manuel Akanji","Ricardo Rodriguez"],"dm":["Remo Freuler","Denis Zakaria"],"mid":[],"am":["Xherdan Shaqiri","Granit Xhaka","Ruben Vargas"],"fwd":["Breel Embolo"]},"tunisia":{"manager":"Sami Trabelsi","manager_nat":"Tunisian","formation":"4-3-3","gk":["Aymen Dahmen"],"def":["Ali Maaloul","Dylan Bronn","Nader Ghandri","Montassar Talbi"],"dm":[],"mid":["Aissa Laidouni","Ellyes Skhiri","Wahbi Khazri"],"am":[],"fwd":["Seifeddine Jaziri","Youssef Msakni","Hannibal Mejbri"]},"turkey":{"manager":"Vincenzo Montella","manager_nat":"Italian","formation":"4-2-3-1","gk":["Ugurcan Cakir"],"def":["Zeki Celik","Merih Demiral","Abdulkerim Bardakci","Ferdi Kadioglu"],"dm":["Orkun Kokcu","Salih Ozcan"],"mid":[],"am":["Arda Guler","Hakan Calhanoglu","Kerem Akturkoglu"],"fwd":["Cenk Tosun"]},"united states":{"manager":"Mauricio Pochettino","manager_nat":"Argentine","formation":"4-3-3","gk":["Matt Turner"],"def":["Sergino Dest","Chris Richards","Miles Robinson","Antonee Robinson"],"dm":[],"mid":["Tyler Adams","Yunus Musah","Christian Pulisic"],"am":[],"fwd":["Tim Weah","Ricardo Pepi","Brenden Aaronson"]},"uruguay":{"manager":"Marcelo Bielsa","manager_nat":"Argentine","formation":"4-4-2","gk":["Sebastian Sosa"],"def":["Nahitan Nandez","Jose Maria Gimenez","Sebastian Coates","Mathias Olivera"],"dm":[],"mid":["Federico Valverde","Manuel Ugarte","Rodrigo Bentancur","Facundo Pellistri"],"am":[],"fwd":["Darwin Nunez","Luis Suarez"]},"uzbekistan":{"manager":"Fabio Cannavaro","manager_nat":"Italian","formation":"4-2-3-1","gk":["Utkir Yusupov"],"def":["Akbar Tursunov","Abdukodir Khusanov","Dostonbek Khamdamov","Oybek Uzbekov"],"dm":["Jasur Yakhshiboev","Doston Tursunov"],"mid":[],"am":["Otabek Shukurov","Jamshid Iskanderov","Eldor Shomurodov"],"fwd":["Shamsiddin Shomurodov"]}};
+/* Two indices off the embedded JSON:
+   - _XI_DATA: normalised-JSON-name → record
+   - _XI_BY_CODE: local 3-letter team code → record (resolved via the same
+     name-bridge / alias table used for the API), so even when local spellings
+     differ from the JSON we still land the right lineup. */
+const _XI_DATA = (()=>{
+  const m = {};
+  Object.entries(_XI_RAW).forEach(([k,v])=>{ m[k]=v; });
+  return m;
+})();
+const _XI_BY_CODE = (()=>{
+  const m = {};
+  Object.entries(_XI_RAW).forEach(([normName, rec])=>{
+    const code = _NAME_TO_CODE[normName];
+    if(code) m[code] = rec;
+  });
+  return m;
+})();
+function lineupFor(teamName){
+  if(!teamName) return null;
+  // 1) direct normalised-name hit
+  let rec = _XI_DATA[_normName(teamName)];
+  if(rec) return rec;
+  // 2) via the team code (handles spelling differences between local + JSON)
+  const code = _NAME_TO_CODE[_normName(teamName)] || codeFor(teamName);
+  if(code && _XI_BY_CODE[code]) return _XI_BY_CODE[code];
+  return null;
+}
+
 /* ---- number formatting (per the master-prompt contract) ---- */
 const f1   = v => v==null||v===""?"–":Number(v).toFixed(1);
 const f2   = v => v==null||v===""?"–":Number(v).toFixed(2);
@@ -636,14 +674,6 @@ const injectGlobalDashboardStyles = () => {
     .chart-svg .code.conf{font-weight:700}
 
     /* ===== COUNTRY PAGE ===== */
-    .cp-summary{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
-    .cp-tile{background:linear-gradient(180deg,var(--ink2),var(--ink));border:1px solid var(--line);
-      border-radius:14px;padding:14px 12px;text-align:center;box-shadow:var(--shadow)}
-    .cp-tile .ct-v{font-family:"Anton",sans-serif;font-size:26px;color:var(--lime);line-height:1}
-    .cp-tile .ct-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-top:6px;font-weight:800}
-    @media(max-width:900px){.cp-summary{grid-template-columns:repeat(3,1fr)}}
-    @media(max-width:460px){.cp-summary{grid-template-columns:repeat(2,1fr)}}
-
     .cp-section{background:linear-gradient(180deg,var(--ink2),var(--ink));border:1px solid var(--line);
       border-radius:18px;padding:18px 18px 16px;box-shadow:var(--shadow)}
     .cp-section > h3{font-family:"Anton",sans-serif;font-size:19px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:14px}
@@ -718,6 +748,61 @@ const injectGlobalDashboardStyles = () => {
       border:1px solid var(--line);transition:.15s}
     .h2h-card:hover{border-color:var(--lime);transform:translateY(-2px)}
     .h2h-card .h2h-fl{font-size:24px} .h2h-card .h2h-nm{font-weight:800;font-size:13.5px;color:var(--txt)}
+
+    /* ===== recent-form strip (hero) ===== */
+    .cp-formstrip-wrap{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .cp-form-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);font-weight:800}
+    .cp-form-pips{display:flex;gap:6px}
+    .cp-fpip{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;
+      font-family:"Spline Sans Mono",monospace;font-weight:700;font-size:13px;color:#10130a}
+    .cp-fpip.fw{background:var(--lime)} .cp-fpip.fd{background:var(--gold)}
+    .cp-fpip.fl{background:var(--mag);color:#fff} .cp-fpip.fu{background:var(--ink3);color:var(--mut)}
+    .cp-form-hint{font-size:10px;color:var(--mut2);font-style:italic}
+
+    /* ===== predicted starting XI ===== */
+    .xi-head{margin-bottom:12px}
+    .xi-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .xi-form-badge{font-family:"Anton",sans-serif;font-size:20px;color:var(--lime);letter-spacing:.04em;
+      background:rgba(200,255,0,.08);border:1px solid rgba(200,255,0,.25);border-radius:8px;padding:3px 11px}
+    .xi-mgr{font-size:12.5px;color:var(--mut)} .xi-mgr b{color:var(--txt)}
+    .xi-pitch{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:8px;
+      min-height:330px;padding:18px 10px;border-radius:14px;
+      background:
+        repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 38px,transparent 38px 76px),
+        linear-gradient(180deg,#11331c,#0c2616);
+      border:1px solid var(--line);overflow:hidden}
+    .xi-pitch-lines{position:absolute;inset:10px;border:2px solid rgba(255,255,255,.10);border-radius:8px;pointer-events:none}
+    .xi-pitch-lines::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:0;border-left:2px dashed rgba(255,255,255,.06)}
+    .xi-pitch-lines::after{content:"";position:absolute;left:50%;top:10px;width:64px;height:64px;
+      transform:translateX(-50%);border:2px solid rgba(255,255,255,.08);border-radius:50%}
+    .xi-line{position:relative;z-index:1;display:flex;justify-content:space-evenly;align-items:center;gap:6px}
+    .xi-player{display:flex;flex-direction:column;align-items:center;gap:5px;max-width:84px}
+    .xi-dot{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;
+      font-size:10.5px;font-weight:800;font-family:"Spline Sans Mono",monospace;
+      box-shadow:0 2px 8px rgba(0,0,0,.35)}
+    .xi-dot.pos-GK{background:var(--gold);color:#10130a}
+    .xi-dot.pos-DE{background:var(--cyan);color:#06222b}
+    .xi-dot.pos-MI{background:#b388ff;color:#1a0f33}
+    .xi-dot.pos-FO{background:var(--lime);color:#10130a}
+    .xi-name{font-size:11px;font-weight:800;color:#fff;text-align:center;line-height:1.15;
+      text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:84px}
+
+    /* ===== key stats vs field average ===== */
+    .vf-grid{display:flex;flex-direction:column;gap:16px}
+    .vf-row{display:flex;flex-direction:column;gap:6px}
+    .vf-top{display:flex;justify-content:space-between;align-items:baseline}
+    .vf-lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:800}
+    .vf-delta{font-family:"Spline Sans Mono",monospace;font-size:12px;font-weight:700}
+    .vf-delta.up{color:var(--lime)} .vf-delta.down{color:var(--mag)}
+    .vf-bars{display:flex;flex-direction:column;gap:5px}
+    .vf-bar{position:relative;height:18px;border-radius:5px;background:var(--ink3);overflow:hidden}
+    .vf-bar i{display:block;height:100%;border-radius:5px}
+    .vf-bar.team i{background:linear-gradient(90deg,var(--lime),#9fd400)}
+    .vf-bar.avg i{background:var(--mut2)}
+    .vf-bar .vf-val{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+      font-family:"Spline Sans Mono",monospace;font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+    .vf-legend{display:flex;gap:16px;justify-content:flex-start;margin-top:14px;font-size:11px;color:var(--mut)}
+    .vf-legend i{display:inline-block;width:14px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
 
     /* player column-group toggles + radar drawer */
     .colgroups{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -867,8 +952,9 @@ function country(rest){
 
   let scope = "TOTAL";
   const groupCodes = D.groups[t.group] || [];
-  // per-section caches of the most recent successful payloads (for the radar, which
-  // needs both this team's row and the all-teams set for the same scope)
+  const lineup = _XI_BY_CODE[code] || lineupFor(t.name);
+
+  // per-section caches of the most recent successful payloads
   let lastTeamRow = null, lastMatches = null, allTeamsRow = null;
 
   app.innerHTML = `
@@ -881,16 +967,18 @@ function country(rest){
           <span class="pill">Group ${esc(t.group)}</span>
           ${t.host?'<span class="pill" style="border-color:var(--lime);color:var(--lime)">Host nation</span>':""}
           <span class="pill">${esc(t.conf||"")}</span>
+          ${lineup?`<span class="pill">${esc(lineup.manager)} · Manager</span>`:""}
         </div>
+        <div id="cp-formstrip" class="cp-formstrip-wrap"></div>
       </div>
     </div>
     <div id="cp-scope" style="margin:18px 0 4px"></div>
     <div class="dashboard-wrapper" style="gap:18px">
-      <section id="cp-tiles"></section>
       <div class="cp-grid2">
-        <section class="cp-section" id="cp-form"><h3>Goals — recent form</h3><div data-body>${skeletonRows(3)}</div></section>
+        <section class="cp-section" id="cp-xi"><h3>Predicted Starting XI</h3><div data-body></div></section>
         <section class="cp-section" id="cp-radar"><h3>Performance Profile</h3><div data-body>${skeletonRows(3)}</div></section>
       </div>
+      <section class="cp-section" id="cp-vs"><h3>Key Stats vs Field Average</h3><div data-body>${skeletonRows(4)}</div></section>
       <section class="cp-section" id="cp-results"><h3>Recent Results</h3><div data-body>${skeletonRows(4)}</div></section>
       <section class="cp-section" id="cp-squad"></section>
       <section class="cp-section" id="cp-h2h"></section>
@@ -899,77 +987,47 @@ function country(rest){
   // scope switcher
   $("#cp-scope").appendChild(scopeSwitcher(scope, (val)=>{ scope = val; loadAll(); }));
 
-  /* ---- summary tiles ---- */
-  function renderTiles(s){
-    const wdl = `${fInt(s.wins)}–${fInt(s.draws)}–${fInt(s.losses)}`;
-    const tiles = [
-      ["Matches", fInt(s.matches_played)],
-      ["W–D–L", wdl],
-      ["Goals F / A", `${fInt(s.goals_for)} / ${fInt(s.goals_against)}`],
-      ["xG F / A", `${f1(s.xg_for)} / ${f1(s.xg_against)}`],
-      ["Avg Poss", fPctRaw(s.avg_possession)],
-      ["Clean Sheets", fInt(s.clean_sheets)],
-    ];
-    $("#cp-tiles").innerHTML = `<div class="cp-summary">
-      ${tiles.map(([k,v])=>`<div class="cp-tile"><div class="ct-v">${v}</div><div class="ct-k">${esc(k)}</div></div>`).join("")}
-    </div>`;
+  // predicted XI is static (from JSON) — render once, immediately
+  renderXI();
+
+  /* ---- compact recent-form strip (newest → oldest, last 5) ---- */
+  function renderFormStrip(matches){
+    const host = $("#cp-formstrip");
+    if(!host) return;
+    const ms = (matches||[]).slice(0,5); // API returns newest-first
+    if(!ms.length){ host.innerHTML = ""; return; }
+    const pip = m=>{
+      const r = m.result, cls = r==="W"?"fw":r==="D"?"fd":r==="L"?"fl":"fu";
+      const lbl = r==="W"?"Win":r==="D"?"Draw":r==="L"?"Loss":"—";
+      return `<span class="cp-fpip ${cls}" title="${lbl} vs ${esc(m.opponent||"")}">${esc(r||"?")}</span>`;
+    };
+    host.innerHTML = `<span class="cp-form-label">Form</span>
+      <span class="cp-form-pips">${ms.map(pip).join("")}</span>
+      <span class="cp-form-hint">newest → oldest</span>`;
   }
 
-  /* ---- recent results (match cards w/ drawers) ---- */
-  function renderResults(matches){
-    const body = $("#cp-results [data-body]");
-    if(!matches || !matches.length){
-      body.innerHTML = `<div class="empty">No matches found for ${esc(t.name)} in this scope.</div>`;
+  /* ---- predicted starting XI graphic + manager ---- */
+  function renderXI(){
+    const body = $("#cp-xi [data-body]");
+    if(!lineup){
+      body.innerHTML = `<div class="empty">No predicted lineup available for ${esc(t.name)}.</div>`;
       return;
     }
-    body.innerHTML = `<div class="match-list">${matches.map((m,i)=>matchCard(m,i)).join("")}</div>`;
-    wireMatchCards(body);
-  }
-
-  /* ---- form chart: goals_for (lime) vs goals_against (mag), result-tinted area ---- */
-  function renderForm(matches){
-    const body = $("#cp-form [data-body]");
-    const ms = (matches||[]).slice().reverse(); // oldest → newest for a left-to-right timeline
-    if(!ms.length){ body.innerHTML = `<div class="empty">No match data.</div>`; return; }
-    const W=520, H=200, pad={l:30,r:14,t:16,b:30};
-    const gf = ms.map(m=>Number(m.goals_for)||0), ga = ms.map(m=>Number(m.goals_against)||0);
-    const ymax = Math.max(3, ...gf, ...ga);
-    const n = ms.length;
-    const sx = i => pad.l + (n<=1?0:(i/(n-1)))*(W-pad.l-pad.r);
-    const sy = v => H-pad.b - (v/ymax)*(H-pad.t-pad.b);
-    const line = arr => arr.map((v,i)=>`${i?"L":"M"}${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join(" ");
-    // result tint segments along the x-axis
-    const resColor = r => r==="W"?"rgba(200,255,0,.16)":r==="D"?"rgba(255,194,75,.14)":r==="L"?"rgba(255,45,135,.14)":"transparent";
-    let bands="";
-    ms.forEach((m,i)=>{
-      const x0 = i===0?pad.l:(sx(i)+sx(i-1))/2;
-      const x1 = i===n-1?(W-pad.r):(sx(i)+sx(i+1))/2;
-      bands+=`<rect x="${x0.toFixed(1)}" y="${pad.t}" width="${(x1-x0).toFixed(1)}" height="${H-pad.t-pad.b}" fill="${resColor(m.result)}"/>`;
-    });
-    // y gridlines
-    let grid="";
-    for(let k=0;k<=ymax;k++){ grid+=`<line class="fc-grid" x1="${pad.l}" y1="${sy(k)}" x2="${W-pad.r}" y2="${sy(k)}"/>
-      <text class="fc-axis" x="${pad.l-6}" y="${sy(k)+3}" text-anchor="end">${k}</text>`; }
-    // x labels (abbreviated dates)
-    let xlab="";
-    ms.forEach((m,i)=>{
-      if(n>8 && i%2!==0 && i!==n-1) return;
-      let d=""; try{ d=new Date(m.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"});}catch(e){}
-      xlab+=`<text class="fc-axis" x="${sx(i)}" y="${H-pad.b+14}" text-anchor="middle">${esc(d)}</text>`;
-    });
-    const dot=(arr,color)=>arr.map((v,i)=>`<circle cx="${sx(i).toFixed(1)}" cy="${sy(v).toFixed(1)}" r="3" fill="${color}"/>`).join("");
+    const mids = [...(lineup.dm||[]), ...(lineup.mid||[]), ...(lineup.am||[])];
+    const xi = [
+      ...(lineup.gk||[]).map(n=>({name:n,pos:"GK"})),
+      ...(lineup.def||[]).map(n=>({name:n,pos:"DE"})),
+      ...mids.map(n=>({name:n,pos:"MI"})),
+      ...(lineup.fwd||[]).map(n=>({name:n,pos:"FO"})),
+    ];
     body.innerHTML = `
-      <svg viewBox="0 0 ${W} ${H}" class="formchart-svg" role="img" aria-label="Goals for and against across recent matches">
-        ${bands}${grid}${xlab}
-        <path d="${line(gf)}" fill="none" stroke="var(--lime)" stroke-width="2.4"/>
-        <path d="${line(ga)}" fill="none" stroke="var(--mag)" stroke-width="2.4"/>
-        ${dot(gf,"var(--lime)")}${dot(ga,"var(--mag)")}
-      </svg>
-      <div class="fc-legend">
-        <span><i style="background:var(--lime)"></i>Goals for</span>
-        <span><i style="background:var(--mag)"></i>Goals against</span>
-        <span style="color:var(--mut2)">band = result (W/D/L)</span>
-      </div>`;
+      <div class="xi-head">
+        <div class="xi-meta">
+          <span class="xi-form-badge">${esc(lineup.formation||"")}</span>
+          <span class="xi-mgr">Manager <b>${esc(lineup.manager)}</b>${lineup.manager_nat?` · ${esc(lineup.manager_nat)}`:""}</span>
+        </div>
+      </div>
+      ${formationPitch(lineup)}`;
   }
 
   /* ---- radar: team per-90 profile vs the average of all qualified nations (same scope) ---- */
@@ -979,12 +1037,11 @@ function country(rest){
     const SPOKES = [
       ["goals_per_90","Goals/90", false],
       ["xg_per_90","xG/90", false],
-      ["xg_against_per_90","xGA/90", true],     // lower better — invert for display
+      ["xg_against_per_90","xGA/90", true],
       ["shot_accuracy","Shot Acc", false],
       ["clean_sheet_pct","CS %", false],
       ["points_per_game","Pts/Game", false],
     ];
-    // normalise each spoke against the max across all teams; invert "lower better" ones
     const labels = SPOKES.map(s=>s[1]);
     const norm = (row)=> SPOKES.map(([k,,invert])=>{
       const vals = allRows.map(r=>Number(r[k])||0);
@@ -1002,7 +1059,60 @@ function country(rest){
       </div>`;
   }
 
-  /* ---- squad table (live from /api/players for this nationality) ---- */
+  /* ---- key stats vs field average: horizontal comparison bars ---- */
+  function renderVsField(teamRow, allRows){
+    const body = $("#cp-vs [data-body]");
+    if(!teamRow || !allRows || !allRows.length){
+      body.innerHTML = `<div class="empty">Not enough data to compare.</div>`; return;
+    }
+    // metric: [key, label, formatter, lowerIsBetter]
+    const METS = [
+      ["goals_per_90","Goals / 90", f2, false],
+      ["xg_per_90","xG / 90", f2, false],
+      ["xg_against_per_90","xGA / 90", f2, true],
+      ["shot_accuracy","Shot Accuracy", fPct, false],
+      ["avg_possession","Avg Possession", fPctRaw, false],
+      ["points_per_game","Points / Game", f2, false],
+    ];
+    const avg = {};
+    METS.forEach(([k])=>{ avg[k] = allRows.reduce((a,r)=>a+(Number(r[k])||0),0)/allRows.length; });
+    const rows = METS.filter(([k])=> teamRow[k]!=null).map(([k,label,fmtFn,lower])=>{
+      const tv = Number(teamRow[k])||0, av = Number(avg[k])||0;
+      const mx = Math.max(tv, av, 0.0001);
+      const tw = Math.min(100,(tv/mx)*100), aw = Math.min(100,(av/mx)*100);
+      const better = lower ? tv<av : tv>av;
+      const diffPct = av ? ((tv-av)/av*100) : 0;
+      const sign = diffPct>=0?"+":"";
+      return `<div class="vf-row">
+        <div class="vf-top">
+          <span class="vf-lbl">${esc(label)}</span>
+          <span class="vf-delta ${better?"up":"down"}">${sign}${diffPct.toFixed(0)}%</span>
+        </div>
+        <div class="vf-bars">
+          <div class="vf-bar team"><i style="width:${tw.toFixed(1)}%"></i><span class="vf-val">${fmtFn(tv)}</span></div>
+          <div class="vf-bar avg"><i style="width:${aw.toFixed(1)}%"></i><span class="vf-val">${fmtFn(av)}</span></div>
+        </div>
+      </div>`;
+    }).join("");
+    body.innerHTML = `<div class="vf-grid">${rows}</div>
+      <div class="vf-legend">
+        <span><i style="background:var(--lime)"></i>${esc(t.name)}</span>
+        <span><i style="background:var(--mut2)"></i>Field average</span>
+      </div>`;
+  }
+
+  /* ---- recent results (concise rows, click to expand the existing drawer) ---- */
+  function renderResults(matches){
+    const body = $("#cp-results [data-body]");
+    if(!matches || !matches.length){
+      body.innerHTML = `<div class="empty">No matches found for ${esc(t.name)} in this scope.</div>`;
+      return;
+    }
+    body.innerHTML = `<div class="match-list compact">${matches.map((m,i)=>matchCard(m,i)).join("")}</div>`;
+    wireMatchCards(body);
+  }
+
+  /* ---- squad table (live from /api/players for this nationality), no Club column ---- */
   function renderSquad(players){
     const sec = $("#cp-squad");
     if(!players || !players.length){
@@ -1019,7 +1129,6 @@ function country(rest){
         <thead><tr>
           <th data-k="full_name" data-t="s">Player</th>
           <th data-k="position" data-t="s">Pos</th>
-          <th data-k="current_club" data-t="s">Club</th>
           <th class="num" data-k="minutes_played_overall">Min</th>
           <th class="num" data-k="goals_overall">G</th>
           <th class="num" data-k="assists_overall">A</th>
@@ -1033,7 +1142,6 @@ function country(rest){
         return `<tr>
           <td class="name">${esc(p.full_name)}</td>
           <td><span class="pos-badge pos-${tag}">${tag}</span></td>
-          <td>${esc(p.current_club||"—")}</td>
           <td class="num" style="color:#fff">${fInt(p.minutes_played_overall)}</td>
           <td class="num">${fInt(p.goals_overall)}</td>
           <td class="num">${fInt(p.assists_overall)}</td>
@@ -1060,10 +1168,9 @@ function country(rest){
 
   /* ---- orchestration ---- */
   function setSkeleton(){
-    $("#cp-tiles").innerHTML = skeletonCards(6);
     $("#cp-results [data-body]").innerHTML = skeletonRows(4);
-    $("#cp-form [data-body]").innerHTML = skeletonRows(3);
     $("#cp-radar [data-body]").innerHTML = skeletonRows(3);
+    $("#cp-vs [data-body]").innerHTML = skeletonRows(4);
     $("#cp-squad").innerHTML = `<h3>Squad</h3>${skeletonRows(5)}`;
   }
 
@@ -1071,28 +1178,29 @@ function country(rest){
     setSkeleton();
     renderH2H(); // static — render immediately
 
-    // team summary row (+ all teams for the radar)
+    // team summary row (+ all teams for the radar / vs-field bars)
     Promise.all([fetchTeam(t.name, scope), fetchTeams(scope)])
       .then(([teamRows, allRows])=>{
         const s = (teamRows && teamRows[0]) || null;
-        if(s){ renderTiles(s); lastTeamRow=s; }
-        else { $("#cp-tiles").innerHTML = `<div class="empty">No team data for ${esc(t.name)} in this scope.</div>`; }
         allTeamsRow = allRows||[];
-        renderRadar(s, allTeamsRow);
+        if(s){ lastTeamRow=s; renderRadar(s, allTeamsRow); renderVsField(s, allTeamsRow); }
+        else {
+          $("#cp-radar [data-body]").innerHTML = `<div class="empty">No team data for ${esc(t.name)} in this scope.</div>`;
+          $("#cp-vs [data-body]").innerHTML = `<div class="empty">No team data for ${esc(t.name)} in this scope.</div>`;
+        }
       })
       .catch(()=>{
-        fetchError($("#cp-tiles"), loadAll);
         $("#cp-radar [data-body]").innerHTML = "";
         fetchError($("#cp-radar [data-body]"), loadAll);
+        $("#cp-vs [data-body]").innerHTML = "";
+        fetchError($("#cp-vs [data-body]"), loadAll);
       });
 
-    // matches → results list + form chart
+    // matches → concise results list + compact form strip in the hero
     fetchMatches(t.name, scope, 10)
-      .then(matches=>{ lastMatches=matches; renderResults(matches); renderForm(matches); })
+      .then(matches=>{ lastMatches=matches; renderResults(matches); renderFormStrip(matches); })
       .catch(()=>{
         fetchError($("#cp-results [data-body]"), loadAll);
-        $("#cp-form [data-body]").innerHTML = "";
-        fetchError($("#cp-form [data-body]"), loadAll);
       });
 
     // squad via player endpoint, filtered to this nationality
@@ -1102,6 +1210,43 @@ function country(rest){
   }
 
   loadAll();
+}
+
+/* ---- predicted starting XI pitch graphic ----
+   Draws ordered lines (GK → DEF → MID → FWD) on a vertical half-pitch.
+   Midfield merges defensive/central/attacking bands into separate rows so
+   the shape reflects the formation. */
+function formationPitch(lineup){
+  const bands = [];
+  if((lineup.fwd||[]).length)  bands.push(lineup.fwd);
+  if((lineup.am||[]).length)   bands.push(lineup.am);
+  if((lineup.mid||[]).length)  bands.push(lineup.mid);
+  if((lineup.dm||[]).length)   bands.push(lineup.dm);
+  if((lineup.def||[]).length)  bands.push(lineup.def);
+  if((lineup.gk||[]).length)   bands.push(lineup.gk);
+
+  const posOf = (name)=>{
+    if((lineup.gk||[]).includes(name)) return "GK";
+    if((lineup.def||[]).includes(name)) return "DE";
+    if((lineup.fwd||[]).includes(name)) return "FO";
+    return "MI";
+  };
+
+  const rowsHtml = bands.map(line=>`
+    <div class="xi-line">
+      ${line.map(name=>{
+        const pos = posOf(name);
+        return `<div class="xi-player">
+          <span class="xi-dot pos-${pos}">${esc(pos)}</span>
+          <span class="xi-name">${esc(shortName(name))}</span>
+        </div>`;
+      }).join("")}
+    </div>`).join("");
+
+  return `<div class="xi-pitch" role="img" aria-label="Predicted starting eleven">
+    <div class="xi-pitch-lines" aria-hidden="true"></div>
+    ${rowsHtml}
+  </div>`;
 }
 function renderSquadRows(tbody, rows){
   tbody.innerHTML = rows.map(p=>`<tr>
